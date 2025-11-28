@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+.loading-icon {
+  display: inline-block;
+  animation: girar 0.9s linear infinite;
+}
+
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
