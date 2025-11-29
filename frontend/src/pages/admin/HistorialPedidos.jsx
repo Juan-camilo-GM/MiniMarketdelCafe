@@ -13,7 +13,7 @@ import {
   IoTimeOutline,
   IoDownloadOutline,
 } from "react-icons/io5";
-import { format, subDays, parseISO } from "date-fns";
+import { format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
 import {
   BarChart,
@@ -24,6 +24,113 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
+// ← NUEVO COMPONENTE: Fila expandible con detalle de productos
+const PedidoRow = ({ pedido, onEstadoChange, onEliminar }) => {
+  const [expandido, setExpandido] = useState(false);
+
+  return (
+    <>
+      {/* Fila principal - clickable */}
+      <tr
+        className="hover:bg-gray-50 cursor-pointer transition-all"
+        onClick={() => setExpandido(!expandido)}
+      >
+        <td className="px-5 py-4">
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold text-gray-400">
+              {expandido ? "▼" : <IoPersonOutline />}
+            </span>
+            <div>
+              <p className="font-medium">{pedido.cliente_nombre || "Sin nombre"}</p>
+              <p className="text-xs text-gray-500">
+                {format(new Date(pedido.created_at), "d MMM yyyy • HH:mm", { locale: es })}
+              </p>
+            </div>
+          </div>
+        </td>
+        <td className="px-5 py-4 font-bold text-indigo-600">
+          ${parseInt(pedido.total || 0).toLocaleString("es-CO")}
+        </td>
+        <td className="px-5 py-4">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold ${
+              pedido.estado === "confirmado"
+                ? "bg-emerald-100 text-emerald-800"
+                : pedido.estado === "pendiente"
+                ? "bg-amber-100 text-amber-800"
+                : "bg-rose-100 text-rose-800"
+            }`}
+          >
+            {pedido.estado?.toUpperCase() || "SIN ESTADO"}
+          </span>
+        </td>
+        <td className="px-5 py-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex gap-2">
+            {pedido.estado !== "confirmado" && (
+              <button
+                onClick={() => onEstadoChange(pedido.id, "confirmado")}
+                className="text-emerald-600 hover:text-emerald-800"
+              >
+                <IoCheckmarkCircle size={19} />
+              </button>
+            )}
+            {pedido.estado !== "cancelado" && (
+              <button
+                onClick={() => onEstadoChange(pedido.id, "cancelado")}
+                className="text-rose-600 hover:text-rose-800"
+              >
+                <IoCloseCircle size={19} />
+              </button>
+            )}
+            <button
+              onClick={() => onEliminar(pedido.id)}
+              className="text-gray-600 hover:text-gray-800"
+            >
+              <IoTrashBin size={18} />
+            </button>
+          </div>
+        </td>
+      </tr>
+
+      {/* Fila expandida con productos */}
+      {expandido && (
+        <tr>
+          <td colSpan="4" className="px-5 py-6 bg-gray-50 border-t">
+            <div className="max-w-5xl mx-auto">
+              <h4 className="font-semibold text-gray-800 mb-4">
+                Productos comprados ({pedido.productos?.length || 0})
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(pedido.productos || []).map((prod, i) => (
+                  <div
+                    key={i}
+                    className="bg-white border rounded-lg p-4 flex justify-between items-center shadow-sm hover:shadow-md transition"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{prod.nombre}</p>
+                      <p className="text-sm text-gray-600">
+                        {prod.cantidad} × ${parseInt(prod.precio || 0).toLocaleString("es-CO")}
+                      </p>
+                    </div>
+                    <p className="font-bold text-indigo-600">
+                      ${(prod.cantidad * parseInt(prod.precio || 0)).toLocaleString("es-CO")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 text-right border-t pt-3">
+                <span className="text-lg font-bold text-gray-800">
+                  Total del pedido: ${parseInt(pedido.total || 0).toLocaleString("es-CO")}
+                </span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
 
 export default function DashboardPedidos() {
   const [pedidos, setPedidos] = useState([]);
@@ -111,7 +218,7 @@ export default function DashboardPedidos() {
     const mapa = {};
     datosFiltrados.forEach((p) => {
       if (p.estado !== "confirmado") return;
-      p.productos.forEach((prod) => {
+      p.productos?.forEach((prod) => {
         mapa[prod.nombre] = (mapa[prod.nombre] || 0) + prod.cantidad;
       });
     });
@@ -129,7 +236,7 @@ export default function DashboardPedidos() {
       p.cliente_nombre,
       p.estado.toUpperCase(),
       parseInt(p.total),
-      p.productos.map((pr) => `${pr.nombre} x${pr.cantidad}`).join(" | "),
+      p.productos?.map((pr) => `${pr.nombre} x${pr.cantidad}`).join(" | ") || "",
     ]);
 
     const csvContent = [
@@ -290,6 +397,7 @@ export default function DashboardPedidos() {
             </div>
           </div>
 
+          {/* TABLA MEJORADA CON DETALLE EXPANDIBLE */}
           <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border overflow-hidden">
             <div className="p-6 border-b bg-gray-50">
               <h3 className="text-xl font-bold text-gray-800">Pedidos recientes ({datosFiltrados.length})</h3>
@@ -306,45 +414,12 @@ export default function DashboardPedidos() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {pedidosPaginados.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-5 py-4">
-                        <div>
-                          <p className="font-medium">{p.cliente_nombre}</p>
-                          <p className="text-xs text-gray-500">
-                            {format(new Date(p.created_at), "d MMM yyyy • HH:mm", { locale: es })}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4 font-bold text-indigo-600">
-                        ${parseInt(p.total).toLocaleString("es-CO")}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          p.estado === "confirmado" ? "bg-emerald-100 text-emerald-800" :
-                          p.estado === "pendiente" ? "bg-amber-100 text-amber-800" :
-                          "bg-rose-100 text-rose-800"
-                        }`}>
-                          {p.estado.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex gap-2">
-                          {p.estado !== "confirmado" && (
-                            <button onClick={() => actualizarEstado(p.id, "confirmado")} className="text-emerald-600 hover:text-emerald-800">
-                              <IoCheckmarkCircle size={19} />
-                            </button>
-                          )}
-                          {p.estado !== "cancelado" && (
-                            <button onClick={() => actualizarEstado(p.id, "cancelado")} className="text-rose-600 hover:text-rose-800">
-                              <IoCloseCircle size={19} />
-                            </button>
-                          )}
-                          <button onClick={() => eliminarPedido(p.id)} className="text-gray-600 hover:text-gray-800">
-                            <IoTrashBin size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                    <PedidoRow
+                      key={p.id}
+                      pedido={p}
+                      onEstadoChange={actualizarEstado}
+                      onEliminar={eliminarPedido}
+                    />
                   ))}
                 </tbody>
               </table>

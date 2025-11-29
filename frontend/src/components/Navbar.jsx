@@ -26,7 +26,7 @@ export default function Navbar() {
 
   // VISTA ADMIN
   const adminLinks = [
-    { to: "/admin", label: "Panel Principal", icon: <IoGrid className="text-xl" /> },
+    { to: "/admin", label: "Productos", icon: <IoGrid className="text-xl" /> },
     { to: "/admin/historial", label: "Dashboard", icon: <IoTime className="text-xl" /> },
   ];
 
