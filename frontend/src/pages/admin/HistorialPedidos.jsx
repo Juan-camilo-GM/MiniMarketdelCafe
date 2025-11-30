@@ -372,7 +372,7 @@ const actualizarEstado = async (id, nuevoEstado) => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-4xl font-extrabold text-gray-900">Dashboard de Ventas</h1>
-            <p className="text-lg text-gray-600">Minimercado • Control total de pedidos y ganancias</p>
+            <p className="text-lg text-gray-600">Control total de pedidos y ganancias</p>
           </div>
           <button
             onClick={exportarCSV}
