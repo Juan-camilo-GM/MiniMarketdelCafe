@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { IoClose, IoCameraOutline, IoSearch } from "react-icons/io5";
 
-const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
+const Modal = ({ isOpen, onClose, title, children, size = "md"}) => {
   if (!isOpen) return null;
   
   const sizeClasses = {
@@ -12,7 +12,7 @@ const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
   };
   
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className={`bg-white rounded-2xl p-6 ${sizeClasses[size]} w-full max-h-[90vh] overflow-y-auto`}>
         <div className="flex justify-between items-center mb-6 border-b pb-4">
           <h3 className="text-xl font-bold text-gray-800">{title}</h3>
@@ -514,7 +514,7 @@ export const Modals = ({
         title="Nuevo Pedido a Proveedor"
         size="lg"
       >
-        <div className="space-y-6">
+        <div className="space-y-6 ">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Proveedor *
