@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { obtenerProductos } from "../../lib/productos";
 import { obtenerCategorias } from "../../lib/categorias";
 import CarritoFlotante from "../../components/CarritoFlotante";
+import toast from "react-hot-toast";
+import { IoCheckmarkCircleOutline, IoAlertCircleOutline } from "react-icons/io5";
 
 // Componente de Skeleton para tarjetas de producto
 function ProductoSkeleton() {
@@ -127,23 +129,49 @@ export default function Catalogo() {
   }, [hayMasProductos, cargandoMas, cargando]);
 
   const agregarAlCarrito = (producto) => {
-    const existe = carrito.find(p => p.id === producto.id);
+    const existe = carrito.find((p) => p.id === producto.id);
+
     if (existe) {
+      // Ya está en el carrito → ¿podemos sumar uno más?
       if (existe.cantidad + 1 > producto.stock) {
-        alert(`No hay suficiente stock de ${producto.nombre}`);
+        toast.error(
+          `Stock insuficiente para "${producto.nombre}"`,
+          {
+            icon: <IoAlertCircleOutline size={22} />,
+            duration: 5000,
+          }
+        );
         return;
       }
-      setCarrito(prev =>
-        prev.map(p =>
+
+      // Sumamos uno
+      setCarrito((prev) =>
+        prev.map((p) =>
           p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
         )
       );
+
+      toast.success(`"${producto.nombre}" +1 agregado al carrito`, {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 3000,
+      });
     } else {
+      // Es nuevo en el carrito
       if (producto.stock < 1) {
-        alert(`No hay stock disponible de ${producto.nombre}`);
+        toast.error(`No hay stock disponible de "${producto.nombre}"`, {
+          icon: <IoAlertCircleOutline size={22} />,
+          duration: 5000,
+        });
         return;
       }
-      setCarrito(prev => [...prev, { ...producto, cantidad: 1 }]);
+
+      // Lo agregamos con cantidad 1
+      setCarrito((prev) => [...prev, { ...producto, cantidad: 1 }]);
+
+      toast.success(`"${producto.nombre}" agregado al carrito`, {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 3000,
+      });
     }
   };
 

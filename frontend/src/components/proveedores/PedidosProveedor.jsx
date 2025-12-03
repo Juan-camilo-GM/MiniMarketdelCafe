@@ -3,26 +3,19 @@ import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { 
   IoPencil, IoTrashBin, IoCheckmarkCircle, 
-  IoCloseCircle, IoClose, IoSearch 
+  IoCloseCircle, IoClose, IoSearch, IoEyeOutline
 } from "react-icons/io5";
+import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline } from "react-icons/io5";
+import toast from "react-hot-toast";
 
 const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
-  const [editandoPedido, setEditandoPedido] = useState(null);
+  const [viendoPedido, setViendoPedido] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [busquedaProveedor, setBusquedaProveedor] = useState("");
   
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina, setItemsPorPagina] = useState(10);
-  
-  // Estados para editar pedido
-  const [formEditarPedido, setFormEditarPedido] = useState({
-    descripcion: "",
-    productos: [],
-    total: 0,
-    estado: "pendiente",
-    fecha_entrega: "",
-  });
 
   // Filtrar pedidos por estado Y búsqueda de proveedor
   const pedidosFiltrados = pedidos.filter(pedido => {
@@ -147,227 +140,298 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
 
   // Función principal para cambiar estado del pedido CON GESTIÓN DE STOCK
   const cambiarEstadoPedido = async (pedidoId, nuevoEstado) => {
-    try {
-      // 1. Obtener el pedido actual
-      const { data: pedido, error: pedidoError } = await supabase
-        .from("pedidos_proveedor")
-        .select("*")
-        .eq("id", pedidoId)
-        .single();
-      
-      if (pedidoError) throw pedidoError;
-      
-      const estadoAnterior = pedido.estado;
-      
-      // 2. Lógica de gestión de stock según transición de estados
-      if (pedido.productos && pedido.productos.length > 0) {
-        let resultadoStock = null;
-        
-        // CASO 1: PENDIENTE → CONFIRMADO (SUMAR stock - recibir productos del proveedor)
-        if (nuevoEstado === "confirmado" && estadoAnterior === "pendiente") {
-          resultadoStock = await actualizarStockProductos(pedido.productos, "sumar");
+    // Toast de confirmación personalizado
+    toast.custom((t) => {
+      const estadosConfig = {
+        confirmado: {
+          titulo: "¿Confirmar pedido?",
+          mensaje: "El stock de los productos se actualizará automáticamente.",
+          color: "emerald",
+          textoBoton: "Confirmar",
+        },
+        cancelado: {
+          titulo: "¿Cancelar pedido?",
+          mensaje: "Si el pedido estaba confirmado, el stock se ajustará.",
+          color: "red",
+          textoBoton: "Cancelar",
+        },
+        pendiente: {
+          titulo: "¿Reactivar pedido?",
+          mensaje: "Si el pedido estaba cancelado, el stock se restaurará.",
+          color: "amber",
+          textoBoton: "Reactivar",
         }
-        
-        // CASO 2: CONFIRMADO → CANCELADO (RESTAR stock - devolver productos al proveedor)
-        else if (nuevoEstado === "cancelado" && estadoAnterior === "confirmado") {
-          resultadoStock = await actualizarStockProductos(pedido.productos, "restar");
-        }
-        
-        // CASO 3: CANCELADO → PENDIENTE (SUMAR stock - reactivar pedido cancelado)
-        else if (nuevoEstado === "pendiente" && estadoAnterior === "cancelado") {
-          resultadoStock = await actualizarStockProductos(pedido.productos, "sumar");
-        }
-        
-        // CASO 4: CONFIRMADO → PENDIENTE (RESTAR stock - deshacer confirmación)
-        else if (nuevoEstado === "pendiente" && estadoAnterior === "confirmado") {
-          resultadoStock = await actualizarStockProductos(pedido.productos, "restar");
-        }
-        
-        // Mostrar advertencia si hubo problemas con algunos productos
-        if (resultadoStock && !resultadoStock.exitoso && resultadoStock.productosConError.length > 0) {
-          alert(`⚠️ ${nuevoEstado === "confirmado" ? "Confirmación" : "Actualización"} completada, pero hubo problemas con: ${resultadoStock.productosConError.join(", ")}`);
-        }
-      }
-      
-      // 3. Actualizar el estado del pedido
-      const { error } = await supabase
-        .from("pedidos_proveedor")
-        .update({ estado: nuevoEstado })
-        .eq("id", pedidoId);
-      
-      if (error) throw error;
-      
-      // 4. Mensaje según transición
-      let mensaje = `✅ Pedido marcado como ${nuevoEstado.toUpperCase()}`;
-      
-      if (nuevoEstado === "confirmado" && estadoAnterior !== "confirmado") {
-        mensaje = "✅ Pedido CONFIRMADO ✓ Stock actualizado";
-      } else if (nuevoEstado === "cancelado" && estadoAnterior === "confirmado") {
-        mensaje = "✅ Pedido CANCELADO ✗ Stock ajustado";
-      } else if (nuevoEstado === "pendiente" && estadoAnterior === "cancelado") {
-        mensaje = "✅ Pedido REACTIVADO ✓ Stock restaurado";
-      }
-      
-      alert(mensaje);
-      onRefresh();
-      
-    } catch (error) {
-      console.error("Error cambiando estado:", error);
-      alert("❌ Error al cambiar el estado: " + error.message);
-    }
-  };
+      };
 
-  const eliminarPedido = async (id) => {
-    if (!confirm("¿Estás seguro de eliminar este pedido?")) return;
-    
-    try {
-      // Verificar si el pedido está confirmado (para ajustar stock si es necesario)
-      const { data: pedido, error: pedidoError } = await supabase
-        .from("pedidos_proveedor")
-        .select("estado, productos")
-        .eq("id", id)
-        .single();
-      
-      if (pedidoError) throw pedidoError;
-      
-      // Si el pedido está confirmado, restar stock antes de eliminar
-      if (pedido.estado === "confirmado" && pedido.productos && pedido.productos.length > 0) {
-        if (confirm("⚠️ Este pedido está CONFIRMADO. ¿Deseas eliminar y ajustar el stock?")) {
-          await actualizarStockProductos(pedido.productos, "restar");
-        } else {
-          return; // Cancelar eliminación
-        }
-      }
-      
-      const { error } = await supabase
-        .from("pedidos_proveedor")
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      alert("✅ Pedido eliminado exitosamente");
-      onRefresh();
-      
-    } catch (error) {
-      console.error("Error eliminando pedido:", error);
-      alert("❌ Error al eliminar el pedido");
-    }
-  };
+      const config = estadosConfig[nuevoEstado] || {
+        titulo: "¿Cambiar estado del pedido?",
+        mensaje: "Esta acción puede afectar el stock de productos.",
+        color: "blue",
+        textoBoton: "Cambiar",
+      };
 
-  // Función para abrir modal de edición
-  const abrirEditarPedido = (pedido) => {
-    setEditandoPedido(pedido);
-    setFormEditarPedido({
-      descripcion: pedido.descripcion || "",
-      productos: pedido.productos || [],
-      total: pedido.total || 0,
-      estado: pedido.estado || "pendiente",
-      fecha_entrega: pedido.fecha_entrega ? 
-        format(new Date(pedido.fecha_entrega), "yyyy-MM-dd") : "",
+      return (
+        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex flex-col border border-gray-200`}>
+          <div className="flex-1 p-5">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 pt-0.5">
+                <IoAlertCircleOutline className="h-6 w-6 text-emerald-600" />
+              </div>
+              <div className="ml-4 flex-1">
+                <h3 className="text-lg font-semibold text-gray-900">{config.titulo}</h3>
+                <p className="mt-1 text-gray-600">{config.mensaje}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex border-t border-gray-200">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+              }}
+              className="flex-1 py-3.5 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-2xl transition"
+            >
+              Volver
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  // 1. Obtener el pedido actual
+                  const { data: pedido, error: pedidoError } = await supabase
+                    .from("pedidos_proveedor")
+                    .select("*")
+                    .eq("id", pedidoId)
+                    .single();
+                  
+                  if (pedidoError) throw pedidoError;
+                  
+                  const estadoAnterior = pedido.estado;
+                  
+                  // 2. Lógica de gestión de stock según transición de estados
+                  if (pedido.productos && pedido.productos.length > 0) {
+                    let resultadoStock = null;
+                    
+                    // CASO 1: PENDIENTE → CONFIRMADO (SUMAR stock - recibir productos del proveedor)
+                    if (nuevoEstado === "confirmado" && estadoAnterior === "pendiente") {
+                      resultadoStock = await actualizarStockProductos(pedido.productos, "sumar");
+                    }
+                    
+                    // CASO 2: CONFIRMADO → CANCELADO (RESTAR stock - devolver productos al proveedor)
+                    else if (nuevoEstado === "cancelado" && estadoAnterior === "confirmado") {
+                      resultadoStock = await actualizarStockProductos(pedido.productos, "restar");
+                    }
+                    
+                    // CASO 3: CANCELADO → PENDIENTE (SUMAR stock - reactivar pedido cancelado)
+                    else if (nuevoEstado === "pendiente" && estadoAnterior === "cancelado") {
+                      resultadoStock = await actualizarStockProductos(pedido.productos, "sumar");
+                    }
+                    
+                    // CASO 4: CONFIRMADO → PENDIENTE (RESTAR stock - deshacer confirmación)
+                    else if (nuevoEstado === "pendiente" && estadoAnterior === "confirmado") {
+                      resultadoStock = await actualizarStockProductos(pedido.productos, "restar");
+                    }
+                    
+                    // Mostrar advertencia si hubo problemas con algunos productos
+                    if (resultadoStock && !resultadoStock.exitoso && resultadoStock.productosConError.length > 0) {
+                      toast.error(`Actualización completada, pero hubo problemas con: ${resultadoStock.productosConError.join(", ")}`, {
+                        icon: <IoAlertCircleOutline size={22} />,
+                        duration: 6000,
+                      });
+                    }
+                  }
+                  
+                  // 3. Actualizar el estado del pedido
+                  const { error } = await supabase
+                    .from("pedidos_proveedor")
+                    .update({ estado: nuevoEstado })
+                    .eq("id", pedidoId);
+                  
+                  if (error) throw error;
+                  
+                  // 4. Mensaje según transición
+                  let mensaje = `Pedido marcado como ${nuevoEstado.toUpperCase()}`;
+                  let icono = <IoCheckmarkCircleOutline size={22} />;
+                  
+                  if (nuevoEstado === "confirmado" && estadoAnterior !== "confirmado") {
+                    mensaje = "Pedido CONFIRMADO ✓ Stock actualizado";
+                  } else if (nuevoEstado === "cancelado" && estadoAnterior === "confirmado") {
+                    mensaje = "Pedido CANCELADO ✗ Stock ajustado";
+                  } else if (nuevoEstado === "pendiente" && estadoAnterior === "cancelado") {
+                    mensaje = "Pedido REACTIVADO ✓ Stock restaurado";
+                  }
+                  
+                  toast.success(mensaje, {
+                    icon: icono,
+                    duration: 4000,
+                  });
+                  
+                  onRefresh();
+                  
+                } catch (error) {
+                  console.error("Error cambiando estado:", error);
+                  
+                  const mensaje = error.message?.includes("network") 
+                    ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+                    : error.message || "Error al cambiar el estado del pedido";
+                    
+                  toast.error(mensaje, {
+                    icon: <IoCloseCircleOutline size={22} />,
+                    duration: 6000,
+                  });
+                }
+              }}
+              className="flex-1 py-3.5 text-base font-medium text-emerald-600 hover:bg-emerald-50 rounded-br-2xl transition border-l border-gray-200"
+            >
+              {config.textoBoton}
+            </button>
+          </div>
+        </div>
+      );
+    }, {
+      duration: Infinity,
     });
   };
 
-  // Función para guardar cambios del pedido CON GESTIÓN DE STOCK
-  const guardarEditarPedido = async () => {
-    if (formEditarPedido.productos.length === 0) {
-      alert("El pedido debe tener al menos un producto");
-      return;
-    }
-    
-    try {
-      const estadoAnterior = editandoPedido.estado;
-      const nuevoEstado = formEditarPedido.estado;
-      
-      // 1. Manejar cambios de stock si cambió el estado
-      if (estadoAnterior !== nuevoEstado && editandoPedido.productos?.length > 0) {
-        // Misma lógica que en cambiarEstadoPedido
-        if (nuevoEstado === "confirmado" && estadoAnterior !== "confirmado") {
-          await actualizarStockProductos(formEditarPedido.productos, "sumar");
-        } else if (nuevoEstado === "cancelado" && estadoAnterior === "confirmado") {
-          await actualizarStockProductos(formEditarPedido.productos, "restar");
-        } else if (nuevoEstado === "pendiente" && estadoAnterior === "cancelado") {
-          await actualizarStockProductos(formEditarPedido.productos, "sumar");
-        } else if (nuevoEstado === "pendiente" && estadoAnterior === "confirmado") {
-          await actualizarStockProductos(formEditarPedido.productos, "restar");
-        }
-      }
-      
-      // 2. Actualizar pedido en la base de datos
-      const pedidoData = {
-        descripcion: formEditarPedido.descripcion || null,
-        productos: formEditarPedido.productos,
-        total: parseFloat(formEditarPedido.total),
-        estado: formEditarPedido.estado,
-        fecha_entrega: formEditarPedido.fecha_entrega || null,
-      };
-      
-      const { error } = await supabase
-        .from("pedidos_proveedor")
-        .update(pedidoData)
-        .eq("id", editandoPedido.id);
-      
-      if (error) throw error;
-      
-      alert("✅ Pedido actualizado exitosamente");
-      setEditandoPedido(null);
-      onRefresh();
-      
-    } catch (error) {
-      console.error("Error actualizando pedido:", error);
-      alert("❌ Error al actualizar el pedido: " + error.message);
-    }
+  const eliminarPedido = async (id) => {
+    // Toast de confirmación personalizado
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex flex-col border border-gray-200`}>
+        <div className="flex-1 p-5">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5">
+              <IoAlertCircleOutline className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">¿Eliminar pedido?</h3>
+              <p className="mt-1 text-gray-600">Esta acción eliminará el pedido permanentemente.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-t border-gray-200">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-2xl transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                // Verificar si el pedido está confirmado (para ajustar stock si es necesario)
+                const { data: pedido, error: pedidoError } = await supabase
+                  .from("pedidos_proveedor")
+                  .select("estado, productos")
+                  .eq("id", id)
+                  .single();
+                
+                if (pedidoError) throw pedidoError;
+                
+                // Si el pedido está confirmado, mostrar confirmación adicional
+                if (pedido.estado === "confirmado" && pedido.productos && pedido.productos.length > 0) {
+                  // Toast de confirmación para pedido confirmado
+                  toast.custom((t2) => (
+                    <div className={`${t2.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-xl pointer-events-auto flex flex-col border border-gray-200`}>
+                      <div className="flex-1 p-5">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 pt-0.5">
+                            <IoAlertCircleOutline className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900">¡Atención!</h3>
+                            <p className="mt-1 text-gray-600">Este pedido está CONFIRMADO. Al eliminar, se ajustará el stock de los productos.</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            toast.dismiss(t2.id);
+                          }}
+                          className="flex-1 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-xl transition"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          onClick={async () => {
+                            toast.dismiss(t2.id);
+                            await actualizarStockProductos(pedido.productos, "restar");
+                            
+                            const { error } = await supabase
+                              .from("pedidos_proveedor")
+                              .delete()
+                              .eq("id", id);
+                            
+                            if (error) throw error;
+                            
+                            toast.success("Pedido eliminado exitosamente", {
+                              icon: <IoTrashOutline size={22} />,
+                              duration: 4000,
+                            });
+                            
+                            onRefresh();
+                          }}
+                          className="flex-1 py-3 text-base font-medium text-orange-600 hover:bg-orange-50 rounded-br-xl transition border-l border-gray-200"
+                        >
+                          Eliminar y ajustar stock
+                        </button>
+                      </div>
+                    </div>
+                  ), {
+                    duration: Infinity,
+                  });
+                  return;
+                }
+                
+                // Para pedidos no confirmados, eliminar directamente
+                const { error } = await supabase
+                  .from("pedidos_proveedor")
+                  .delete()
+                  .eq("id", id);
+                
+                if (error) throw error;
+                
+                toast.success("Pedido eliminado exitosamente", {
+                  icon: <IoTrashOutline size={22} />,
+                  duration: 4000,
+                });
+                
+                onRefresh();
+                
+              } catch (error) {
+                console.error("Error eliminando pedido:", error);
+                
+                const mensaje = error.message?.includes("network") 
+                  ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+                  : "Error al eliminar el pedido";
+                    
+                toast.error(mensaje, {
+                  icon: <IoCloseCircleOutline size={22} />,
+                  duration: 5000,
+                });
+              }
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-red-600 hover:bg-red-50 rounded-br-2xl transition border-l border-gray-200"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+    });
   };
 
-  // Funciones para editar productos en el pedido
-  const actualizarProductoPedido = (index, campo, valor) => {
-    const nuevosProductos = [...formEditarPedido.productos];
-    
-    if (campo === "cantidad" || campo === "precio_unitario") {
-      nuevosProductos[index][campo] = parseFloat(valor);
-      nuevosProductos[index].subtotal = 
-        nuevosProductos[index].cantidad * nuevosProductos[index].precio_unitario;
-    } else {
-      nuevosProductos[index][campo] = valor;
-    }
-    
-    const nuevoTotal = nuevosProductos.reduce((sum, prod) => sum + prod.subtotal, 0);
-    
-    setFormEditarPedido(prev => ({
-      ...prev,
-      productos: nuevosProductos,
-      total: nuevoTotal
-    }));
-  };
-
-  const eliminarProductoPedido = (index) => {
-    const producto = formEditarPedido.productos[index];
-    const nuevosProductos = formEditarPedido.productos.filter((_, i) => i !== index);
-    
-    setFormEditarPedido(prev => ({
-      ...prev,
-      productos: nuevosProductos,
-      total: prev.total - producto.subtotal
-    }));
-  };
-
-  const agregarProductoVacio = () => {
-    const nuevoProducto = {
-      nombre: "",
-      cantidad: 1,
-      precio_unitario: 0,
-      subtotal: 0
-    };
-    
-    setFormEditarPedido(prev => ({
-      ...prev,
-      productos: [...prev.productos, nuevoProducto]
-    }));
+  // Función para abrir modal de visualización
+  const abrirVerPedido = (pedido) => {
+    setViendoPedido(pedido);
   };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 border">
-      {/* Encabezado con filtros y paginación */}
+            {/* Encabezado con filtros y paginación */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h3 className="text-xl font-bold text-gray-800">
@@ -456,12 +520,13 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
                 </td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-2">
+                    {/* Botón VER reemplaza al botón EDITAR */}
                     <button
-                      onClick={() => abrirEditarPedido(pedido)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm flex items-center gap-1"
+                      onClick={() => abrirVerPedido(pedido)}
+                      className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 text-sm flex items-center gap-1"
                     >
-                      <IoPencil size={14} />
-                      Editar
+                      <IoEyeOutline size={14} />
+                      Ver
                     </button>
                     
                     {/* BOTONES PARA CAMBIAR ESTADO - MANTENIDOS */}
@@ -603,16 +668,16 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
         </div>
       )}
 
-      {/* Modal para editar pedido */}
-      {editandoPedido && (
+      {/* Modal para VER pedido (solo visualización) */}
+      {viendoPedido && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6 border-b pb-4">
               <h3 className="text-xl font-bold text-gray-800">
-                Editar Pedido #{editandoPedido.id}
+                Detalles del Pedido #{viendoPedido.id}
               </h3>
               <button
-                onClick={() => setEditandoPedido(null)}
+                onClick={() => setViendoPedido(null)}
                 className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
               >
                 <IoClose size={24} />
@@ -624,160 +689,107 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Proveedor:</p>
-                  <p className="font-medium">{editandoPedido.proveedores?.nombre}</p>
+                  <p className="font-medium text-lg">{viendoPedido.proveedores?.nombre}</p>
                 </div>
                 
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Fecha creación:</p>
                   <p className="font-medium">
-                    {format(new Date(editandoPedido.created_at), "dd/MM/yyyy")}
+                    {format(new Date(viendoPedido.created_at), "dd/MM/yyyy HH:mm")}
                   </p>
                 </div>
               </div>
               
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Estado:</p>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    viendoPedido.estado === "confirmado" 
+                      ? "bg-emerald-100 text-emerald-800" 
+                      : viendoPedido.estado === "cancelado"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-amber-100 text-amber-800"
+                  }`}>
+                    {viendoPedido.estado === "confirmado" ? "CONFIRMADO" : 
+                     viendoPedido.estado === "cancelado" ? "CANCELADO" : "PENDIENTE"}
+                  </span>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Total:</p>
+                  <p className="font-bold text-2xl text-rose-600">
+                    ${parseFloat(viendoPedido.total || 0).toLocaleString("es-CO")}
+                  </p>
+                </div>
+                
+                {viendoPedido.fecha_entrega && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Fecha entrega estimada:</p>
+                    <p className="font-medium">
+                      {format(new Date(viendoPedido.fecha_entrega), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
               {/* Descripción */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción del pedido
-                </label>
-                <textarea
-                  value={formEditarPedido.descripcion}
-                  onChange={(e) => setFormEditarPedido({...formEditarPedido, descripcion: e.target.value})}
-                  className="w-full p-3 border rounded-lg"
-                  rows="3"
-                  placeholder="Descripción del pedido..."
-                />
-              </div>
-              
-              {/* Estado del pedido */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estado del pedido
-                </label>
-                <select
-                  value={formEditarPedido.estado}
-                  onChange={(e) => setFormEditarPedido({...formEditarPedido, estado: e.target.value})}
-                  className="w-full p-3 border rounded-lg"
-                >
-                  <option value="pendiente">Pendiente</option>
-                  <option value="confirmado">Confirmado</option>
-                  <option value="cancelado">Cancelado</option>
-                </select>
-              </div>
-              
-              {/* Fecha de entrega */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha estimada de entrega (opcional)
-                </label>
-                <input
-                  type="date"
-                  value={formEditarPedido.fecha_entrega}
-                  onChange={(e) => setFormEditarPedido({...formEditarPedido, fecha_entrega: e.target.value})}
-                  className="w-full p-3 border rounded-lg"
-                />
-              </div>
+              {viendoPedido.descripcion && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Descripción:</p>
+                  <div className="p-3 bg-gray-50 rounded-lg border">
+                    <p className="text-gray-700">{viendoPedido.descripcion}</p>
+                  </div>
+                </div>
+              )}
               
               {/* Productos del pedido */}
               <div className="border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-semibold text-gray-800">
-                    Productos del pedido ({formEditarPedido.productos.length})
-                  </h4>
-                  <button
-                    onClick={agregarProductoVacio}
-                    className="px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
-                  >
-                    + Agregar producto
-                  </button>
-                </div>
+                <h4 className="font-semibold text-gray-800 mb-4">
+                  Productos ({viendoPedido.productos?.length || 0})
+                </h4>
                 
-                {formEditarPedido.productos.length === 0 ? (
+                {!viendoPedido.productos || viendoPedido.productos.length === 0 ? (
                   <div className="text-center py-4 text-gray-500">
                     No hay productos en este pedido
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {formEditarPedido.productos.map((producto, index) => (
-                      <div key={index} className="border rounded-lg p-4 bg-gray-50">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <input
-                              type="text"
-                              value={producto.nombre}
-                              onChange={(e) => actualizarProductoPedido(index, "nombre", e.target.value)}
-                              placeholder="Nombre del producto"
-                              className="w-full p-2 border rounded mb-2"
-                            />
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                              <div>
-                                <label className="block text-xs text-gray-600 mb-1">Cantidad</label>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  value={producto.cantidad}
-                                  onChange={(e) => actualizarProductoPedido(index, "cantidad", e.target.value)}
-                                  className="w-full p-2 border rounded"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-xs text-gray-600 mb-1">Precio unitario</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={producto.precio_unitario}
-                                  onChange={(e) => actualizarProductoPedido(index, "precio_unitario", e.target.value)}
-                                  className="w-full p-2 border rounded"
-                                />
-                              </div>
-                              
-                              <div>
-                                <label className="block text-xs text-gray-600 mb-1">Subtotal</label>
-                                <div className="p-2 bg-white border rounded font-medium text-emerald-600">
-                                  ${producto.subtotal.toLocaleString("es-CO")}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <button
-                            onClick={() => eliminarProductoPedido(index)}
-                            className="ml-3 p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                          >
-                            <IoTrashBin size={18} />
-                          </button>
+                    <div className="grid grid-cols-5 gap-2 text-sm font-medium text-gray-700 pb-2 border-b">
+                      <div className="col-span-2">Producto</div>
+                      <div className="text-center">Cantidad</div>
+                      <div className="text-center">Precio Unitario</div>
+                      <div className="text-right">Subtotal</div>
+                    </div>
+                    
+                    {viendoPedido.productos.map((producto, index) => (
+                      <div key={index} className="grid grid-cols-5 gap-2 py-2 border-b last:border-b-0">
+                        <div className="col-span-2 font-medium">{producto.nombre || "Producto sin nombre"}</div>
+                        <div className="text-center">{producto.cantidad || 0}</div>
+                        <div className="text-center">${(producto.precio_unitario || 0).toLocaleString("es-CO")}</div>
+                        <div className="text-right font-medium text-emerald-600">
+                          ${(producto.subtotal || 0).toLocaleString("es-CO")}
                         </div>
                       </div>
                     ))}
                     
                     {/* Total del pedido */}
-                    <div className="flex justify-between items-center pt-3 border-t">
+                    <div className="flex justify-between items-center pt-4 border-t">
                       <span className="font-bold text-lg">Total del pedido:</span>
-                      <span className="font-bold text-2xl text-emerald-600">
-                        ${formEditarPedido.total.toLocaleString("es-CO")}
+                      <span className="font-bold text-2xl text-rose-600">
+                        ${parseFloat(viendoPedido.total || 0).toLocaleString("es-CO")}
                       </span>
                     </div>
                   </div>
                 )}
               </div>
               
-              {/* Botones de acción */}
-              <div className="flex gap-3 justify-end pt-6 border-t">
+              {/* Botón de cerrar */}
+              <div className="flex justify-end pt-6 border-t">
                 <button
-                  onClick={() => setEditandoPedido(null)}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  onClick={() => setViendoPedido(null)}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
                 >
-                  Cancelar
-                </button>
-                <button
-                  onClick={guardarEditarPedido}
-                  disabled={formEditarPedido.productos.length === 0}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Guardar Cambios
+                  Cerrar
                 </button>
               </div>
             </div>

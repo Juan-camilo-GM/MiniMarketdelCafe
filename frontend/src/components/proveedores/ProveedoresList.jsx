@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { IoPencil, IoTrashBin, IoSearch, IoClose } from "react-icons/io5";
+import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline } from "react-icons/io5";
+import toast from "react-hot-toast";
 
 const ProveedoresList = ({ proveedores, onRefresh }) => {
   const [editandoProveedor, setEditandoProveedor] = useState(null);
@@ -88,7 +90,10 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
 
   const guardarProveedor = async () => {
     if (!formProveedor.nombre.trim()) {
-      alert("El nombre del proveedor es requerido");
+      toast.error("El nombre del proveedor es requerido", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -110,7 +115,11 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
       
       if (error) throw error;
       
-      alert(`✅ Proveedor ${editandoProveedor ? "actualizado" : "registrado"} exitosamente`);
+      toast.success(`Proveedor ${editandoProveedor ? "actualizado" : "registrado"} exitosamente`, {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 4000,
+      });
+      
       onRefresh();
       setEditandoProveedor(null);
       setFormProveedor({
@@ -119,50 +128,131 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
       
     } catch (error) {
       console.error("Error guardando proveedor:", error);
-      alert("❌ Error al guardar el proveedor");
+      
+      const mensaje = error.message?.includes("network") 
+        ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+        : "Error al guardar el proveedor";
+        
+      toast.error(mensaje, {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 5000,
+      });
     }
   };
 
   const eliminarProveedor = async (id, nombre) => {
-    if (!confirm(`¿Estás seguro de eliminar al proveedor "${nombre}"?`)) return;
-    
-    try {
-      // Verificar si el proveedor tiene facturas o pedidos asociados
-      const { data: facturas, error: facturasError } = await supabase
-        .from("facturas")
-        .select("id")
-        .eq("proveedor_id", id)
-        .limit(1);
-      
-      if (facturasError) throw facturasError;
-      
-      const { data: pedidos, error: pedidosError } = await supabase
-        .from("pedidos_proveedor")
-        .select("id")
-        .eq("proveedor_id", id)
-        .limit(1);
-      
-      if (pedidosError) throw pedidosError;
-      
-      if (facturas.length > 0 || pedidos.length > 0) {
-        alert("❌ No se puede eliminar este proveedor porque tiene facturas o pedidos asociados");
-        return;
-      }
-      
-      const { error } = await supabase
-        .from("proveedores")
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      alert("✅ Proveedor eliminado exitosamente");
-      onRefresh();
-      
-    } catch (error) {
-      console.error("Error eliminando proveedor:", error);
-      alert("❌ Error al eliminar el proveedor");
-    }
+    // Toast de confirmación personalizado
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex flex-col border border-gray-200`}>
+        <div className="flex-1 p-5">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5">
+              <IoAlertCircleOutline className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">¿Eliminar proveedor?</h3>
+              <p className="mt-1 text-gray-600">¿Estás seguro de eliminar al proveedor "{nombre}"? Esta acción no se puede deshacer.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-t border-gray-200">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-2xl transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                // Verificar si el proveedor tiene facturas o pedidos asociados
+                const { data: facturas, error: facturasError } = await supabase
+                  .from("facturas")
+                  .select("id")
+                  .eq("proveedor_id", id)
+                  .limit(1);
+                
+                if (facturasError) throw facturasError;
+                
+                const { data: pedidos, error: pedidosError } = await supabase
+                  .from("pedidos_proveedor")
+                  .select("id")
+                  .eq("proveedor_id", id)
+                  .limit(1);
+                
+                if (pedidosError) throw pedidosError;
+                
+                if (facturas.length > 0 || pedidos.length > 0) {
+                  // Toast de advertencia para proveedores con relaciones
+                  toast.custom((t2) => (
+                    <div className={`${t2.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-xl pointer-events-auto flex flex-col border border-gray-200`}>
+                      <div className="flex-1 p-5">
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0 pt-0.5">
+                            <IoAlertCircleOutline className="h-6 w-6 text-orange-600" />
+                          </div>
+                          <div className="ml-4 flex-1">
+                            <h3 className="text-lg font-semibold text-gray-900">No se puede eliminar</h3>
+                            <p className="mt-1 text-gray-600">Este proveedor tiene facturas o pedidos asociados. Primero elimine los registros relacionados.</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex border-t border-gray-200">
+                        <button
+                          onClick={() => {
+                            toast.dismiss(t2.id);
+                          }}
+                          className="flex-1 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-xl rounded-br-xl transition"
+                        >
+                          Entendido
+                        </button>
+                      </div>
+                    </div>
+                  ), {
+                    duration: Infinity,
+                  });
+                  return;
+                }
+                
+                const { error } = await supabase
+                  .from("proveedores")
+                  .delete()
+                  .eq("id", id);
+                
+                if (error) throw error;
+                
+                toast.success("Proveedor eliminado exitosamente", {
+                  icon: <IoTrashOutline size={22} />,
+                  duration: 4000,
+                });
+                
+                onRefresh();
+                
+              } catch (error) {
+                console.error("Error eliminando proveedor:", error);
+                
+                const mensaje = error.message?.includes("network") 
+                  ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+                  : "Error al eliminar el proveedor";
+                    
+                toast.error(mensaje, {
+                  icon: <IoCloseCircleOutline size={22} />,
+                  duration: 5000,
+                });
+              }
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-red-600 hover:bg-red-50 rounded-br-2xl transition border-l border-gray-200"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+    });
   };
 
   return (

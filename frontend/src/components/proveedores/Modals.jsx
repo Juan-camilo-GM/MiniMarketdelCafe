@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { IoClose, IoCameraOutline, IoSearch } from "react-icons/io5";
+import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
+import toast from "react-hot-toast";
 
 const Modal = ({ isOpen, onClose, title, children, size = "md"}) => {
   if (!isOpen) return null;
@@ -132,7 +134,10 @@ export const Modals = ({
   // Función para guardar factura CON IMAGEN
   const guardarFactura = async () => {
     if (!formFactura.proveedor_id || !formFactura.numero_factura.trim() || !formFactura.monto) {
-      alert("Proveedor, número de factura y monto son requeridos");
+      toast.error("Proveedor, número de factura y monto son requeridos", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -174,26 +179,44 @@ export const Modals = ({
       
       if (error) throw error;
       
-      alert("✅ Factura registrada exitosamente");
+      toast.success("Factura registrada exitosamente", {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 4000,
+      });
+      
       setModalFactura(false);
       resetFormFactura();
       onRefresh();
       
     } catch (error) {
       console.error("Error guardando factura:", error);
-      alert("❌ Error al guardar la factura: " + error.message);
+      
+      const mensaje = error.message?.includes("network") 
+        ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+        : error.message || "Error al guardar la factura";
+        
+      toast.error(mensaje, {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 6000,
+      });
     }
   };
   
   // Función para guardar pedido
   const guardarPedido = async () => {
     if (!formPedido.proveedor_id) {
-      alert("Selecciona un proveedor");
+      toast.error("Selecciona un proveedor", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
     if (formPedido.productos.length === 0) {
-      alert("Agrega al menos un producto al pedido");
+      toast.error("Agrega al menos un producto al pedido", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -213,21 +236,36 @@ export const Modals = ({
       
       if (error) throw error;
       
-      alert("✅ Pedido registrado exitosamente");
+      toast.success("Pedido registrado exitosamente", {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 4000,
+      });
+      
       setModalPedido(false);
       resetFormPedido();
       onRefresh();
       
     } catch (error) {
       console.error("Error guardando pedido:", error);
-      alert("❌ Error al guardar el pedido: " + error.message);
+      
+      const mensaje = error.message?.includes("network") 
+        ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+        : error.message || "Error al guardar el pedido";
+        
+      toast.error(mensaje, {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 6000,
+      });
     }
   };
   
   // Función para guardar proveedor
   const guardarProveedor = async () => {
     if (!formProveedor.nombre.trim()) {
-      alert("El nombre del proveedor es requerido");
+      toast.error("El nombre del proveedor es requerido", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -238,14 +276,26 @@ export const Modals = ({
       
       if (error) throw error;
       
-      alert("✅ Proveedor registrado exitosamente");
+      toast.success("Proveedor registrado exitosamente", {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 4000,
+      });
+      
       setModalProveedor(false);
       resetFormProveedor();
       onRefresh();
       
     } catch (error) {
       console.error("Error guardando proveedor:", error);
-      alert("❌ Error al guardar el proveedor: " + error.message);
+      
+      const mensaje = error.message?.includes("network") 
+        ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+        : error.message || "Error al guardar el proveedor";
+        
+      toast.error(mensaje, {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 6000,
+      });
     }
   };
   
@@ -257,7 +307,10 @@ export const Modals = ({
   
   const agregarProductoAlPedido = () => {
     if (!productoSeleccionado || !cantidadProducto || !precioProducto) {
-      alert("Completa todos los campos del producto");
+      toast.error("Completa todos los campos del producto", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -332,12 +385,18 @@ export const Modals = ({
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert("Por favor, selecciona un archivo de imagen");
+      toast.error("Por favor, selecciona un archivo de imagen", {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen es muy grande. Máximo 5MB");
+      toast.error("La imagen es muy grande. Máximo 5MB", {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -586,7 +645,7 @@ export const Modals = ({
                       <input
                         type="number"
                         value={precioProducto}
-                        onChange={(e) => set }
+                        onChange={(e) => setPrecioProducto(e.target.value)}
                         className="w-full p-2 border rounded"
                         placeholder="0.00"
                       />
@@ -789,4 +848,4 @@ export const Modals = ({
       </Modal>
     </>
   );
-};   
+};

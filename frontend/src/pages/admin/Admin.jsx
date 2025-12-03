@@ -1,5 +1,6 @@
-import { IoSaveOutline, IoTrashBin, IoClose, IoCloseCircle } from "react-icons/io5";
+import { IoSaveOutline, IoTrashBin, IoClose, IoCloseCircle, IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline, IoCloseOutline } from "react-icons/io5";
 import { useEffect, useState, useMemo } from "react";
+import toast from "react-hot-toast"
 import {
   obtenerProductos,
   agregarProducto,
@@ -47,10 +48,11 @@ export default function Productos() {
   useEffect(() => {
     async function cargarDatos() {
       setCargandoProductos(true);
+
       try {
         const [prodsRes, catsRes] = await Promise.all([
           obtenerProductos(),
-          obtenerCategorias()
+          obtenerCategorias(),
         ]);
 
         const prods = prodsRes || [];
@@ -58,10 +60,14 @@ export default function Productos() {
 
         setProductos(prods);
         setCategorias(cats);
-        setCatMap(Object.fromEntries(cats.map(c => [c.id, c.nombre])));
+        setCatMap(Object.fromEntries(cats.map((c) => [c.id, c.nombre])));
       } catch (error) {
         console.error("Error cargando datos:", error);
-        alert("No se pudieron cargar los productos. Revisa tu conexión.");
+        toast.error("No se pudieron cargar los productos. Revisa tu conexión.", {
+          icon: <IoAlertCircleOutline size={22} />,
+          duration: 8000,           // más tiempo porque es un error crítico
+          style: { maxWidth: "500px" }, // opcional: para que el texto no se corte
+        });
       } finally {
         setCargandoProductos(false);
       }
@@ -70,7 +76,7 @@ export default function Productos() {
     cargarDatos();
   }, []);
 
-  // === FUNCIONES DEL MODAL (sin cambios) ===
+  // === FUNCIONES DEL MODAL ===
   const abrirCrear = () => {
     setFormProducto({ id: null, nombre: "", precio: "", stock: "", categoria_id: "", imagen_url: null });
     setImagenFile(null);
@@ -107,6 +113,7 @@ export default function Productos() {
       setLoading(true);
       let imagen_url = formProducto.imagen_url;
 
+      // Subir nueva imagen (si hay)
       if (imagenFile) {
         if (formProducto.imagen_url) await deleteOldImage(formProducto.imagen_url);
         const url = await subirImagen(imagenFile);
@@ -118,41 +125,117 @@ export default function Productos() {
         precio: Number(formProducto.precio || 0),
         stock: Number(formProducto.stock || 0),
         categoria_id: Number(formProducto.categoria_id) || null,
-        imagen_url
+        imagen_url,
       };
 
+      let productoFinal;
+
       if (formProducto.id) {
+        // === EDITAR ===
         const actualizado = await actualizarProducto(formProducto.id, datos);
-        const conCategoria = {
+        productoFinal = {
           ...actualizado,
-          categorias: { id: actualizado.categoria_id, nombre: catMap[actualizado.categoria_id] || "" }
+          categorias: {
+            id: actualizado.categoria_id,
+            nombre: catMap[actualizado.categoria_id] || "Sin categoría",
+          },
         };
-        setProductos(prev => prev.map(p => p.id === conCategoria.id ? conCategoria : p));
+        setProductos((prev) =>
+          prev.map((p) => (p.id === productoFinal.id ? productoFinal : p))
+        );
+
+        toast.success("Producto actualizado correctamente", {
+          icon: <IoCheckmarkCircleOutline size={22} />,
+          duration: 4000,
+        });
       } else {
+        // === CREAR NUEVO ===
         const agregado = await agregarProducto(datos);
-        const conCategoria = {
+        productoFinal = {
           ...agregado,
-          categorias: { id: agregado.categoria_id, nombre: catMap[agregado.categoria_id] || "" }
+          categorias: {
+            id: agregado.categoria_id,
+            nombre: catMap[agregado.categoria_id] || "Sin categoría",
+          },
         };
-        setProductos(prev => [...prev, conCategoria]);
+        setProductos((prev) => [...prev, productoFinal]);
+
+        toast.success("Producto agregado correctamente", {
+          icon: <IoCheckmarkCircleOutline size={22} />,
+          duration: 4000,
+        });
       }
 
-      cerrar();
+      cerrar(); // cerrar modal/formulario
+
     } catch (e) {
-      console.error(e);
-      alert(e.message || "Error al guardar el producto");
+      console.error("Error al guardar producto:", e);
+
+      // Mensaje claro y profesional
+      const mensaje = e.message?.includes("network")
+        ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+        : e.message || "Error al guardar el producto";
+
+      toast.error(mensaje, {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 7000,
+      });
+    } finally {
       setLoading(false);
     }
   };
 
   const borrar = async (id) => {
-    if (!window.confirm("¿Seguro que querés eliminar este producto?")) return;
-    try {
-      await eliminarProducto(id);
-      setProductos(prev => prev.filter(p => p.id !== id));
-    } catch (e) {
-      alert("Error al eliminar el producto");
-    }
+    // Reemplazamos el window.confirm por un toast con confirmación
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex flex-col border border-gray-200`}>
+        <div className="flex-1 p-5">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5">
+              <IoAlertCircleOutline className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">¿Eliminar producto?</h3>
+              <p className="mt-1 text-gray-600">Esta acción no se puede deshacer. El producto se eliminará permanentemente.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-t border-gray-200">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-2xl transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await eliminarProducto(id);
+                setProductos(prev => prev.filter(p => p.id !== id));
+                toast.success("Producto eliminado correctamente", {
+                  icon: <IoTrashOutline size={22} />,
+                  duration: 4000,
+                });
+              } catch (e) {
+                console.error("Error al eliminar:", e);
+                toast.error("Error al eliminar el producto", {
+                  icon: <IoCloseCircleOutline size={22} />,
+                  duration: 5000,
+                });
+              }
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-red-600 hover:bg-red-50 rounded-br-2xl transition border-l border-gray-200"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity, // Permanece hasta que el usuario decida
+    });
   };
 
   // FILTROS
@@ -286,7 +369,7 @@ export default function Productos() {
         )}
       </div>
 
-      {/* ==================== MODAL (sin cambios) ==================== */}
+      {/* ==================== MODAL ==================== */}
       {isOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[80] p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col">

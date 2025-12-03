@@ -14,6 +14,9 @@ import {
   IoDownloadOutline,
   IoWarningOutline,
   IoStorefrontOutline,
+  IoCheckmarkCircleOutline, 
+  IoCloseCircleOutline, 
+  IoAlertCircleOutline 
 } from "react-icons/io5";
 import { format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
@@ -26,7 +29,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import ProveedoresDashboard from "../../components/proveedores/ProveedoresDashboard"; // ← NUEVA IMPORTACIÓN
+import ProveedoresDashboard from "../../components/proveedores/ProveedoresDashboard";
+import toast from "react-hot-toast"; 
 
 // Componentes existentes (mantenemos todo igual)
 const PedidoRow = ({ pedido, onEstadoChange, onEliminar }) => {
@@ -222,15 +226,17 @@ export default function HistorialPedidos() {
         .eq("id", id)
         .single();
 
-      if (errorPedido) {
-        console.error("Error obteniendo pedido:", errorPedido);
-        alert("Error al obtener los datos del pedido");
+      if (errorPedido || !pedido) {
+        toast.error("Error al obtener los datos del pedido", {
+          icon: <IoAlertCircleOutline size={22} />,
+        });
         return;
       }
 
+      // === CONFIRMAR PEDIDO ===
       if (nuevoEstado === "confirmado" && pedido.estado !== "confirmado") {
         const productosConError = [];
-        
+
         for (const prod of pedido.productos || []) {
           const { data: productoActual, error: errorGet } = await supabase
             .from("productos")
@@ -238,33 +244,37 @@ export default function HistorialPedidos() {
             .eq("id", prod.id)
             .single();
 
-          if (errorGet) {
-            productosConError.push(prod.nombre);
+          if (errorGet || !productoActual) {
+            productosConError.push(prod.nombre || "ID: " + prod.id);
             continue;
           }
 
-          const nuevoStock = productoActual.stock - prod.cantidad;
-
-          if (nuevoStock < 0) {
-            alert(`⚠️ Stock insuficiente para "${prod.nombre}". Stock actual: ${productoActual.stock}, solicitado: ${prod.cantidad}`);
+          if (productoActual.stock - prod.cantidad < 0) {
+            toast.error(
+              `Stock insuficiente para "${prod.nombre}" (disponible: ${productoActual.stock}, solicitado: ${prod.cantidad})`,
+              { icon: <IoAlertCircleOutline size={24} />, duration: 8000 }
+            );
             return;
           }
 
           const { error: errorUpdate } = await supabase
             .from("productos")
-            .update({ stock: nuevoStock })
+            .update({ stock: productoActual.stock - prod.cantidad })
             .eq("id", prod.id);
 
-          if (errorUpdate) {
-            productosConError.push(prod.nombre);
-          }
+          if (errorUpdate) productosConError.push(prod.nombre);
         }
 
         if (productosConError.length > 0) {
-          alert(`⚠️ Error actualizando stock de: ${productosConError.join(", ")}`);
+          toast.error(`Error al actualizar stock: ${productosConError.join(", ")}`, {
+            icon: <IoCloseCircleOutline size={22} />,
+            duration: 7000,
+          });
+          return;
         }
       }
 
+      // === CANCELAR PEDIDO (devolver stock) ===
       if (nuevoEstado === "cancelado" && pedido.estado === "confirmado") {
         for (const prod of pedido.productos || []) {
           const { data: productoActual } = await supabase
@@ -282,27 +292,39 @@ export default function HistorialPedidos() {
         }
       }
 
+      // === ACTUALIZAR ESTADO ===
       const { error } = await supabase
         .from("pedidos")
         .update({ estado: nuevoEstado })
         .eq("id", id);
 
       if (error) {
-        console.error("Error actualizando estado:", error);
-        alert("Error al actualizar el estado del pedido");
+        toast.error("Error al actualizar el estado del pedido", {
+          icon: <IoCloseCircleOutline size={22} />,
+        });
         return;
       }
 
-      alert(`✅ Pedido ${nuevoEstado === "confirmado" ? "confirmado y stock actualizado" : "actualizado"} correctamente`);
+      // === ÉXITO ===
+      toast.success(
+        nuevoEstado === "confirmado"
+          ? "Pedido confirmado y stock actualizado"
+          : nuevoEstado === "cancelado"
+          ? "Pedido cancelado y stock devuelto"
+          : "Estado actualizado correctamente",
+        { icon: <IoCheckmarkCircleOutline size={24} /> }
+      );
+
       fetchPedidos();
       fetchProductosStockBajo();
 
-    } catch (error) {
-      console.error("Error general:", error);
-      alert("Error inesperado al procesar el pedido");
+    } catch (err) {
+      console.error("Error inesperado:", err);
+      toast.error("Error inesperado al procesar el pedido", {
+        icon: <IoCloseCircleOutline size={22} />,
+      });
     }
   };
-
   const eliminarPedido = async (id) => {
     if (!window.confirm("¿Eliminar este pedido permanentemente?")) return;
     await supabase.from("pedidos").delete().eq("id", id);

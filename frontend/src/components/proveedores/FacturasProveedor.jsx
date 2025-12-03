@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import { IoPencil, IoTrashBin, IoEyeOutline, IoClose, IoCameraOutline } from "react-icons/io5";
+import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline } from "react-icons/io5";
+import toast from "react-hot-toast";
 
 // Función para obtener la URL correcta de la imagen
 const getImageUrl = (path) => {
@@ -127,39 +129,80 @@ const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
   };
 
   const eliminarFactura = async (id, numero) => {
-    if (!confirm(`¿Estás seguro de eliminar la factura ${numero}?`)) return;
-    
-    try {
-      // Primero obtener la factura para ver si tiene imagen
-      const { data: facturaData } = await supabase
-        .from("facturas")
-        .select("imagen_url")
-        .eq("id", id)
-        .single();
-      
-      // Si tiene imagen, eliminarla del storage
-      if (facturaData?.imagen_url) {
-        const fileName = facturaData.imagen_url.split('/').pop();
-        await supabase.storage
-          .from('facturas')
-          .remove([fileName]);
-      }
-      
-      // Eliminar la factura de la base de datos
-      const { error } = await supabase
-        .from("facturas")
-        .delete()
-        .eq("id", id);
-      
-      if (error) throw error;
-      
-      alert("✅ Factura eliminada exitosamente");
-      onRefresh();
-      
-    } catch (error) {
-      console.error("Error eliminando factura:", error);
-      alert("❌ Error al eliminar la factura");
-    }
+    // Toast de confirmación personalizado
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-2xl pointer-events-auto flex flex-col border border-gray-200`}>
+        <div className="flex-1 p-5">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5">
+              <IoAlertCircleOutline className="h-6 w-6 text-red-600" />
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">¿Eliminar factura?</h3>
+              <p className="mt-1 text-gray-600">Esta acción no se puede deshacer. La factura {numero} se eliminará permanentemente.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-t border-gray-200">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-2xl transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                // Primero obtener la factura para ver si tiene imagen
+                const { data: facturaData } = await supabase
+                  .from("facturas")
+                  .select("imagen_url")
+                  .eq("id", id)
+                  .single();
+                
+                // Si tiene imagen, eliminarla del storage
+                if (facturaData?.imagen_url) {
+                  const fileName = facturaData.imagen_url.split('/').pop();
+                  await supabase.storage
+                    .from('facturas')
+                    .remove([fileName]);
+                }
+                
+                // Eliminar la factura de la base de datos
+                const { error } = await supabase
+                  .from("facturas")
+                  .delete()
+                  .eq("id", id);
+                
+                if (error) throw error;
+                
+                toast.success("Factura eliminada exitosamente", {
+                  icon: <IoTrashOutline size={22} />,
+                  duration: 4000,
+                });
+                
+                onRefresh();
+                
+              } catch (error) {
+                console.error("Error eliminando factura:", error);
+                toast.error("Error al eliminar la factura", {
+                  icon: <IoCloseCircleOutline size={22} />,
+                  duration: 5000,
+                });
+              }
+            }}
+            className="flex-1 py-3.5 text-base font-medium text-red-600 hover:bg-red-50 rounded-br-2xl transition border-l border-gray-200"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+    });
   };
 
   // Función para abrir modal de edición
@@ -182,12 +225,18 @@ const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      alert("Por favor, selecciona un archivo de imagen");
+      toast.error("Por favor, selecciona un archivo de imagen", {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
     if (file.size > 5 * 1024 * 1024) {
-      alert("La imagen es muy grande. Máximo 5MB");
+      toast.error("La imagen es muy grande. Máximo 5MB", {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -200,20 +249,57 @@ const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
 
   // Función para eliminar imagen en edición
   const eliminarImagenEditar = () => {
-    if (confirm("¿Eliminar la imagen de esta factura?")) {
-      setFormEditarFactura(prev => ({
-        ...prev,
-        imagen: null,
-        imagen_preview: null,
-        imagen_url_actual: null
-      }));
-    }
+    // Toast de confirmación para eliminar imagen
+    toast.custom((t) => (
+      <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-xl pointer-events-auto flex flex-col border border-gray-200`}>
+        <div className="flex-1 p-5">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5">
+              <IoAlertCircleOutline className="h-6 w-6 text-orange-600" />
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">¿Eliminar imagen?</h3>
+              <p className="mt-1 text-gray-600">Esta imagen se eliminará de la factura.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-t border-gray-200">
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+            }}
+            className="flex-1 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-bl-xl transition"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              setFormEditarFactura(prev => ({
+                ...prev,
+                imagen: null,
+                imagen_preview: null,
+                imagen_url_actual: null
+              }));
+            }}
+            className="flex-1 py-3 text-base font-medium text-orange-600 hover:bg-orange-50 rounded-br-xl transition border-l border-gray-200"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
+    });
   };
 
   // Función para guardar cambios de factura
   const guardarEditarFactura = async () => {
     if (!formEditarFactura.numero_factura.trim() || !formEditarFactura.monto) {
-      alert("Número de factura y monto son requeridos");
+      toast.error("Número de factura y monto son requeridos", {
+        icon: <IoAlertCircleOutline size={22} />,
+        duration: 4000,
+      });
       return;
     }
     
@@ -267,13 +353,25 @@ const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
       
       if (error) throw error;
       
-      alert("✅ Factura actualizada exitosamente");
+      toast.success("Factura actualizada exitosamente", {
+        icon: <IoCheckmarkCircleOutline size={22} />,
+        duration: 4000,
+      });
+      
       setEditandoFactura(null);
       onRefresh();
       
     } catch (error) {
       console.error("Error actualizando factura:", error);
-      alert("❌ Error al actualizar la factura: " + error.message);
+      
+      const mensaje = error.message?.includes("network") 
+        ? "Error de conexión. Revisa tu internet e intenta de nuevo."
+        : error.message || "Error al actualizar la factura";
+        
+      toast.error(mensaje, {
+        icon: <IoCloseCircleOutline size={22} />,
+        duration: 6000,
+      });
     }
   };
 
