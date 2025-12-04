@@ -108,15 +108,14 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
     ${entrega === "domicilio" ? `*Dirección:* ${cliente.direccion.trim()}\n*Entrega:* Domicilio (+$2.000)` : "*Entrega:* Recoger en tienda"}
 
     *Método de pago:*
-    ${
-      pago === "efectivo"
-        ? cambio
-          ? `Efectivo\nPago con: $${Number(cambio).toLocaleString("es-CO")} (para cambio)`
-          : "Efectivo"
-        : pago === "nequi"
-          ? `Transferencia Nequi\nNúmero: ${NEQUI_NUMERO}\nTitular: ${NOMBRE_TITULAR}`
-          : `Transferencia Daviplata\nNúmero: ${DAVIPLATA_NUMERO}\nTitular: ${NOMBRE_TITULAR}`
-    }
+    ${pago === "efectivo"
+          ? cambio
+            ? `Efectivo\nPago con: $${Number(cambio).toLocaleString("es-CO")} (para cambio)`
+            : "Efectivo"
+          : pago === "nequi"
+            ? `Transferencia Nequi\nNúmero: ${NEQUI_NUMERO}\nTitular: ${NOMBRE_TITULAR}`
+            : `Transferencia Daviplata\nNúmero: ${DAVIPLATA_NUMERO}\nTitular: ${NOMBRE_TITULAR}`
+        }
 
     *Productos:*
     ${carrito.map(p => `• ${p.nombre} × ${p.cantidad} → $${(p.precio * p.cantidad).toLocaleString("es-CO")}`).join("\n")}
@@ -124,13 +123,12 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
     *Subtotal:* $${total.toLocaleString("es-CO")}
     ${costoEnvio > 0 ? `*Envío:* $${costoEnvio.toLocaleString("es-CO")}\n` : ""}*TOTAL A PAGAR:* *$${totalFinal.toLocaleString("es-CO")}*
 
-    ${
-      pago === "efectivo"
-        ? entrega === "domicilio"
-          ? "¡Perfecto! El pago lo haces contra entrega. Por favor ten listo el dinero. ¡Gracias!"
-          : "¡Genial! Te espero en la tienda para que pagues y recojas tu pedido. ¡Gracias!"
-        : "¡Gracias! Por favor adjunta aquí el comprobante de la transferencia y confirmo tu pedido al instante"
-    }`;
+    ${pago === "efectivo"
+          ? entrega === "domicilio"
+            ? "¡Perfecto! El pago lo haces contra entrega. Por favor ten listo el dinero. ¡Gracias!"
+            : "¡Genial! Te espero en la tienda para que pagues y recojas tu pedido. ¡Gracias!"
+          : "¡Gracias! Por favor adjunta aquí el comprobante de la transferencia y confirmo tu pedido al instante"
+        }`;
 
       // Limpiar todo
       setCarrito([]);
@@ -139,41 +137,40 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       setIsOpen(false);
 
       toast.custom(
-      (t) => (
-        <div
-          className={`${
-            t.visible ? "animate-in fade-in slide-in-from-top" : "animate-out fade-out"
-          } fixed inset-x-4 top-6 md:top-10 left-1/2 -translate-x-1/2 max-w-md w-full mx-auto z-[9999] pointer-events-auto`}
-        >
-          <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl shadow-2xl p-6 flex items-center justify-between gap-5 border border-white/20">
-            <div className="flex items-center gap-4">
-              {/* Ícono de éxito */}
-              <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+        (t) => (
+          <div
+            className={`${t.visible ? "animate-in fade-in slide-in-from-top" : "animate-out fade-out"
+              } fixed inset-x-4 top-6 md:top-10 left-1/2 -translate-x-1/2 max-w-md w-full mx-auto z-[9999] pointer-events-auto`}
+          >
+            <div className="bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-2xl shadow-2xl p-6 flex items-center justify-between gap-5 border border-white/20">
+              <div className="flex items-center gap-4">
+                {/* Ícono de éxito */}
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+
+                <div>
+                  <p className="font-bold text-lg">¡Pedido registrado con éxito!</p>
+                  <p className="text-sm opacity-95 mt-1">
+                    Recuerda enviar el mensaje por WhatsApp para validar y confirmar tu compra.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <p className="font-bold text-lg">¡Pedido registrado con éxito!</p>
-                <p className="text-sm opacity-95 mt-1">
-                  Recuerda enviar el mensaje por WhatsApp para validar y confirmar tu compra.
-                </p>
-              </div>
+              {/* Botón cerrar */}
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
+              >
+                <IoClose className="text-2xl" />
+              </button>
             </div>
-
-            {/* Botón cerrar */}
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all hover:scale-110 flex-shrink-0"
-            >
-              <IoClose className="text-2xl" />
-            </button>
           </div>
-        </div>
-      ),
-      { duration: Infinity } // ← Nunca se va solo
-    );
+        ),
+        { duration: Infinity } // ← Nunca se va solo
+      );
 
       // Abrir WhatsApp
       window.open(`https://wa.me/${TU_NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`, "_blank");
@@ -203,7 +200,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
         "
       >
         <IoCart className="text-3xl sm:text-5xl lg:text-6xl" />
-        
+
         {cantidadTotal > 0 && (
           <span className="
             absolute -top-3 -right-3 bg-red-500 text-white font-bold rounded-full
@@ -287,9 +284,9 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
             {/* Header */}
             <div className="bg-gradient-to-br from-emerald-600 to-green-700 text-white p-6 text-center relative">
               <h2 className="text-2xl font-bold">Confirmar Pedido</h2>
-              <button 
+              <button
                 type="button"
-                onClick={cerrarCheckout} 
+                onClick={cerrarCheckout}
                 className="absolute top-4 right-4 bg-white/25 hover:bg-white/40 rounded-full p-2 transition"
               >
                 <IoClose className="text-2xl cursor-pointer" />
@@ -322,11 +319,10 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   {/* DOMICILIO */}
                   <div
                     onClick={() => setEntrega("domicilio")}
-                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                      entrega === "domicilio"
+                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${entrega === "domicilio"
                         ? "border-emerald-500 bg-emerald-50 shadow-lg"
                         : "border-gray-300 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -344,11 +340,10 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   {/* RECOGER */}
                   <div
                     onClick={() => setEntrega("recoger")}
-                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                      entrega === "recoger"
+                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${entrega === "recoger"
                         ? "border-purple-500 bg-purple-50 shadow-lg"
                         : "border-gray-300 hover:border-gray-400"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -368,7 +363,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
               {/* Dirección (solo si es domicilio) */}
               {entrega === "domicilio" && (
                 <div className="animate-in slide-in-from-top duration-300">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Dirección exacta</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Dirección de Entrega</label>
                   <input
                     type="text"
                     placeholder="Conjunto / bloque / apartamento"
@@ -386,9 +381,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
 
                   <div
                     onClick={() => setPago("efectivo")}
-                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                      pago === "efectivo" ? "border-emerald-500 bg-emerald-50 shadow-md" : "border-gray-300"
-                    }`}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "efectivo" ? "border-emerald-500 bg-emerald-50 shadow-md" : "border-gray-300"
+                      }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-6 h-6 rounded-full border-2 border-emerald-600 flex items-center justify-center">
@@ -405,9 +399,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
 
                   <div
                     onClick={() => setPago("nequi")}
-                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                      pago === "nequi" ? "border-purple-600 bg-purple-50 shadow-md" : "border-gray-300"
-                    }`}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "nequi" ? "border-purple-600 bg-purple-50 shadow-md" : "border-gray-300"
+                      }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-6 h-6 rounded-full border-2 border-purple-600 flex items-center justify-center">
@@ -422,9 +415,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
 
                   <div
                     onClick={() => setPago("daviplata")}
-                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                      pago === "daviplata" ? "border-green-600 bg-green-50 shadow-md" : "border-gray-300"
-                    }`}
+                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "daviplata" ? "border-green-600 bg-green-50 shadow-md" : "border-gray-300"
+                      }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-6 h-6 rounded-full border-2 border-green-600 flex items-center justify-center">

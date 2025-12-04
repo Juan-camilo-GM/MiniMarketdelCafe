@@ -266,11 +266,6 @@ export default function RegistrarVenta() {
                                                 <IoCartOutline size={32} />
                                             </div>
                                         )}
-                                        {producto.stock <= 5 && producto.stock > 0 && (
-                                            <span className="absolute top-2 right-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
-                                                ¡Quedan {producto.stock}!
-                                            </span>
-                                        )}
                                     </div>
                                     <h3 className="font-semibold text-slate-800 line-clamp-2 mb-1 group-hover:text-indigo-600 transition-colors">
                                         {producto.nombre}
@@ -279,9 +274,14 @@ export default function RegistrarVenta() {
                                         <p className="font-bold text-lg text-slate-900">
                                             ${parseInt(producto.precio).toLocaleString("es-CO")}
                                         </p>
-                                        {producto.stock <= 0 && (
-                                            <span className="text-xs font-bold text-rose-500">AGOTADO</span>
-                                        )}
+                                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${producto.stock <= 0
+                                                ? "bg-rose-100 text-rose-600"
+                                                : producto.stock <= 5
+                                                    ? "bg-orange-100 text-orange-600"
+                                                    : "bg-slate-100 text-slate-600"
+                                            }`}>
+                                            {producto.stock <= 0 ? "AGOTADO" : `${producto.stock} und`}
+                                        </span>
                                     </div>
                                 </button>
                             ))}
