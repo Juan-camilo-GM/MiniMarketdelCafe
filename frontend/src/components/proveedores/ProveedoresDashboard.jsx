@@ -32,14 +32,14 @@ const ProveedoresDashboard = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      
+
       // Cargar proveedores
       const { data: proveedoresData } = await supabase
         .from("proveedores")
         .select("*")
         .order("nombre");
       setProveedores(proveedoresData || []);
-      
+
       // Cargar pedidos a proveedores
       const { data: pedidosData } = await supabase
         .from("pedidos_proveedor")
@@ -49,7 +49,7 @@ const ProveedoresDashboard = () => {
         `)
         .order("created_at", { ascending: false });
       setPedidosProveedor(pedidosData || []);
-      
+
       // Cargar facturas
       const { data: facturasData } = await supabase
         .from("facturas")
@@ -59,14 +59,14 @@ const ProveedoresDashboard = () => {
         `)
         .order("fecha", { ascending: false });
       setFacturas(facturasData || []);
-      
+
       // Cargar productos
       const { data: productosData } = await supabase
         .from("productos")
         .select("*")
         .order("nombre");
       setProductos(productosData || []);
-      
+
     } catch (error) {
       console.error("Error cargando datos:", error);
     } finally {
@@ -98,43 +98,49 @@ const ProveedoresDashboard = () => {
     <div className="space-y-8">
       {/* Métricas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-lg p-6 border">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total proveedores</p>
-              <p className="text-3xl font-black text-indigo-600 mt-1">{proveedores.length}</p>
+              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total proveedores</p>
+              <p className="text-3xl font-black text-indigo-600 mt-2 group-hover:scale-105 transition-transform origin-left">{proveedores.length}</p>
             </div>
-            <IoBusinessOutline className="text-5xl text-indigo-200 opacity-70" />
+            <div className="p-4 bg-indigo-50 rounded-2xl group-hover:bg-indigo-100 transition-colors">
+              <IoBusinessOutline className="text-3xl text-indigo-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6 border">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Gastos en pedidos</p>
-              <p className="text-3xl font-black text-rose-600 mt-1">
+              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Gastos en pedidos</p>
+              <p className="text-3xl font-black text-rose-600 mt-2 group-hover:scale-105 transition-transform origin-left">
                 ${gastosTotales.toLocaleString("es-CO")}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs font-medium text-slate-400 mt-1">
                 ${gastosPendientes.toLocaleString("es-CO")} pendientes
               </p>
             </div>
-            <IoCardOutline className="text-5xl text-rose-200 opacity-70" />
+            <div className="p-4 bg-rose-50 rounded-2xl group-hover:bg-rose-100 transition-colors">
+              <IoCardOutline className="text-3xl text-rose-600" />
+            </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-6 border">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total facturado</p>
-              <p className="text-3xl font-black text-purple-600 mt-1">
+              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total facturado</p>
+              <p className="text-3xl font-black text-purple-600 mt-2 group-hover:scale-105 transition-transform origin-left">
                 ${facturasTotales.toLocaleString("es-CO")}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs font-medium text-slate-400 mt-1">
                 {facturas.length} facturas registradas
               </p>
             </div>
-            <IoReceiptOutline className="text-5xl text-purple-200 opacity-70" />
+            <div className="p-4 bg-purple-50 rounded-2xl group-hover:bg-purple-100 transition-colors">
+              <IoReceiptOutline className="text-3xl text-purple-600" />
+            </div>
           </div>
         </div>
       </div>
@@ -143,41 +149,47 @@ const ProveedoresDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={() => setModalProveedor(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-xl flex items-center justify-center gap-2 transition"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] group"
         >
-          <IoAddCircleOutline size={20} />
-          Nuevo Proveedor
+          <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+            <IoAddCircleOutline size={24} />
+          </div>
+          <span className="font-bold text-lg">Nuevo Proveedor</span>
         </button>
         <button
           onClick={() => setModalPedido(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-xl flex items-center justify-center gap-2 transition"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] group"
         >
-          <IoStorefrontOutline size={20} />
-          Nuevo Pedido
+          <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+            <IoStorefrontOutline size={24} />
+          </div>
+          <span className="font-bold text-lg">Nuevo Pedido</span>
         </button>
         <button
           onClick={() => setModalFactura(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl flex items-center justify-center gap-2 transition"
+          className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] group"
         >
-          <IoReceiptOutline size={20} />
-          Nueva Factura
+          <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
+            <IoReceiptOutline size={24} />
+          </div>
+          <span className="font-bold text-lg">Nueva Factura</span>
         </button>
       </div>
 
       {/* Componentes separados */}
-      <ProveedoresList 
-        proveedores={proveedores} 
+      <ProveedoresList
+        proveedores={proveedores}
         onRefresh={cargarDatos}
       />
-      
-      <PedidosProveedor 
+
+      <PedidosProveedor
         pedidos={pedidosProveedor}
         proveedores={proveedores}
         productos={productos}
         onRefresh={cargarDatos}
       />
-      
-      <FacturasProveedor 
+
+      <FacturasProveedor
         facturas={facturas}
         proveedores={proveedores}
         onRefresh={cargarDatos}

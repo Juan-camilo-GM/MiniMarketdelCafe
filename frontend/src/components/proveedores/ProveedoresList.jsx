@@ -231,90 +231,92 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 border">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden flex flex-col">
       {/* Encabezado con buscador y paginación */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-          <h3 className="text-xl font-bold text-gray-800">
-            Proveedores ({proveedoresFiltrados.length})
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Mostrando {indiceInicial + 1}-{Math.min(indiceFinal, proveedoresFiltrados.length)} de {proveedoresFiltrados.length}
-          </p>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-          {/* Selector de items por página */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Mostrar:</span>
-            <select
-              value={itemsPorPagina}
-              onChange={(e) => cambiarItemsPorPagina(e.target.value)}
-              className="px-3 py-2 border rounded-lg text-sm"
-            >
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select>
+      <div className="p-6 border-b border-slate-100 bg-white">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">
+              Proveedores ({proveedoresFiltrados.length})
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">
+              Gestiona tus proveedores y contactos
+            </p>
           </div>
 
-          {/* Buscador de proveedores */}
-          <div className="relative">
-            <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar proveedor, contacto o email..."
-              value={busquedaProveedor}
-              onChange={(e) => setBusquedaProveedor(e.target.value)}
-              className="pl-10 px-3 py-2 border rounded-lg w-full md:w-64"
-            />
-            {busquedaProveedor && (
-              <button
-                onClick={() => setBusquedaProveedor("")}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            {/* Selector de items por página */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500 font-medium">Mostrar:</span>
+              <select
+                value={itemsPorPagina}
+                onChange={(e) => cambiarItemsPorPagina(e.target.value)}
+                className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
               >
-                <IoClose size={16} />
-              </button>
-            )}
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+
+            {/* Buscador de proveedores */}
+            <div className="relative">
+              <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar proveedor..."
+                value={busquedaProveedor}
+                onChange={(e) => setBusquedaProveedor(e.target.value)}
+                className="pl-10 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl w-full md:w-64 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+              />
+              {busquedaProveedor && (
+                <button
+                  onClick={() => setBusquedaProveedor("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <IoClose size={16} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Tabla de proveedores */}
-      <div className="overflow-x-auto mb-6">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider text-xs font-semibold">
             <tr>
-              <th className="p-3 text-left text-sm font-medium text-gray-700">Proveedor</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-700">Contacto</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-700">Teléfono</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-700">Email</th>
-              <th className="p-3 text-left text-sm font-medium text-gray-700">Acciones</th>
+              <th className="px-6 py-4 rounded-tl-lg">Proveedor</th>
+              <th className="px-6 py-4">Contacto</th>
+              <th className="px-6 py-4">Teléfono</th>
+              <th className="px-6 py-4">Email</th>
+              <th className="px-6 py-4 rounded-tr-lg">Acciones</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-slate-100">
             {proveedoresPaginados.map((prov) => (
-              <tr key={prov.id} className="hover:bg-gray-50">
-                <td className="p-3 font-medium">{prov.nombre}</td>
-                <td className="p-3">{prov.contacto || "-"}</td>
-                <td className="p-3">{prov.telefono || "-"}</td>
-                <td className="p-3">{prov.email || "-"}</td>
-                <td className="p-3">
+              <tr key={prov.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
+                <td className="px-6 py-4 font-medium text-slate-900">{prov.nombre}</td>
+                <td className="px-6 py-4 text-slate-600">{prov.contacto || "-"}</td>
+                <td className="px-6 py-4 text-slate-600">{prov.telefono || "-"}</td>
+                <td className="px-6 py-4 text-slate-600">{prov.email || "-"}</td>
+                <td className="px-6 py-4">
                   <div className="flex gap-2">
                     <button
                       onClick={() => abrirModalEditar(prov)}
-                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm flex items-center gap-1"
+                      className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 transition-colors"
+                      title="Editar"
                     >
-                      <IoPencil size={14} />
-                      Editar
+                      <IoPencil size={18} />
                     </button>
                     <button
                       onClick={() => eliminarProveedor(prov.id, prov.nombre)}
-                      className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm flex items-center gap-1"
+                      className="p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                      title="Eliminar"
                     >
-                      <IoTrashBin size={14} />
-                      Eliminar
+                      <IoTrashBin size={18} />
                     </button>
                   </div>
                 </td>
@@ -326,42 +328,42 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
 
       {/* Mensaje sin resultados */}
       {proveedoresPaginados.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          {busquedaProveedor
-            ? `No hay proveedores que coincidan con "${busquedaProveedor}"`
-            : "No hay proveedores registrados"}
+        <div className="text-center py-10">
+          <div className="bg-slate-50 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+            <IoSearch className="text-2xl text-slate-400" />
+          </div>
+          <p className="text-slate-500 text-sm">
+            {busquedaProveedor
+              ? `No hay proveedores que coincidan con "${busquedaProveedor}"`
+              : "No hay proveedores registrados"}
+          </p>
         </div>
       )}
 
       {/* Paginación */}
       {totalPaginas > 1 && (
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-6 border-t">
-          <div className="text-sm text-gray-600">
-            Página {paginaActual} de {totalPaginas}
-          </div>
+        <div className="px-6 py-4 border-t border-slate-100 flex justify-between items-center text-sm bg-slate-50/50 mt-auto">
+          <span className="text-slate-500 font-medium">
+            Mostrando <span className="text-slate-800 font-bold">{indiceInicial + 1}</span> a <span className="text-slate-800 font-bold">{Math.min(indiceFinal, proveedoresFiltrados.length)}</span> de <span className="text-slate-800 font-bold">{proveedoresFiltrados.length}</span>
+          </span>
 
           <div className="flex items-center gap-2">
-            {/* Botón anterior */}
             <button
               onClick={() => cambiarPagina(paginaActual - 1)}
               disabled={paginaActual === 1}
-              className={`px-3 py-1 rounded-lg border ${paginaActual === 1
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-700 hover:bg-gray-50'
-                }`}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
             >
-              ← Anterior
+              Anterior
             </button>
 
-            {/* Números de página */}
             <div className="flex gap-1">
               {generarNumerosPagina().map((pagina) => (
                 <button
                   key={pagina}
                   onClick={() => cambiarPagina(pagina)}
-                  className={`w-8 h-8 rounded-lg ${pagina === paginaActual
-                    ? 'bg-indigo-600 text-white'
-                    : 'border text-gray-700 hover:bg-gray-50'
+                  className={`w-8 h-8 rounded-lg font-medium transition-colors ${pagina === paginaActual
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/30'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                 >
                   {pagina}
@@ -369,46 +371,23 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
               ))}
             </div>
 
-            {/* Botón siguiente */}
             <button
               onClick={() => cambiarPagina(paginaActual + 1)}
               disabled={paginaActual === totalPaginas}
-              className={`px-3 py-1 rounded-lg border ${paginaActual === totalPaginas
-                ? 'text-gray-400 cursor-not-allowed'
-                : 'text-gray-700 hover:bg-gray-50'
-                }`}
+              className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
             >
-              Siguiente →
+              Siguiente
             </button>
-          </div>
-
-          {/* Input para ir a página específica */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Ir a:</span>
-            <input
-              type="number"
-              min="1"
-              max={totalPaginas}
-              value={paginaActual}
-              onChange={(e) => {
-                const pagina = parseInt(e.target.value);
-                if (pagina >= 1 && pagina <= totalPaginas) {
-                  cambiarPagina(pagina);
-                }
-              }}
-              className="w-16 px-2 py-1 border rounded-lg text-center"
-            />
-            <span className="text-sm text-gray-600">de {totalPaginas}</span>
           </div>
         </div>
       )}
 
       {/* Modal para editar/crear proveedor */}
       {editandoProveedor !== null && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6 border-b pb-4">
-              <h3 className="text-xl font-bold text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-lg font-bold text-slate-800">
                 {editandoProveedor ? "Editar Proveedor" : "Nuevo Proveedor"}
               </h3>
               <button
@@ -418,15 +397,15 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
                     nombre: "", contacto: "", telefono: "", email: "", direccion: "", productos_sum: ""
                   });
                 }}
-                className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
               >
                 <IoClose size={24} />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                   Nombre del proveedor *
                 </label>
                 <input
@@ -434,68 +413,68 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
                   placeholder="Ej: Distribuidora ABC S.A."
                   value={formProveedor.nombre}
                   onChange={(e) => setFormProveedor({ ...formProveedor, nombre: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Contacto</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Contacto</label>
                   <input
                     type="text"
                     placeholder="Ej: Juan Pérez"
                     value={formProveedor.contacto}
                     onChange={(e) => setFormProveedor({ ...formProveedor, contacto: e.target.value })}
-                    className="w-full p-3 border rounded-lg"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 mb-1">Teléfono</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Teléfono</label>
                   <input
                     type="tel"
                     placeholder="Ej: 3001234567"
                     value={formProveedor.telefono}
                     onChange={(e) => setFormProveedor({ ...formProveedor, telefono: e.target.value })}
-                    className="w-full p-3 border rounded-lg"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Email</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
                 <input
                   type="email"
                   placeholder="Ej: contacto@proveedor.com"
                   value={formProveedor.email}
                   onChange={(e) => setFormProveedor({ ...formProveedor, email: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Dirección</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dirección</label>
                 <textarea
                   placeholder="Dirección completa del proveedor"
                   value={formProveedor.direccion}
                   onChange={(e) => setFormProveedor({ ...formProveedor, direccion: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                   rows="2"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Productos que suministra</label>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Productos que suministra</label>
                 <textarea
                   placeholder="Lista de productos o servicios que provee"
                   value={formProveedor.productos_sum}
                   onChange={(e) => setFormProveedor({ ...formProveedor, productos_sum: e.target.value })}
-                  className="w-full p-3 border rounded-lg"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white outline-none transition-all"
                   rows="3"
                 />
               </div>
 
-              <div className="flex gap-3 justify-end pt-4 border-t">
+              <div className="flex gap-3 justify-end pt-4 border-t border-slate-100">
                 <button
                   onClick={() => {
                     setEditandoProveedor(null);
@@ -503,13 +482,13 @@ const ProveedoresList = ({ proveedores, onRefresh }) => {
                       nombre: "", contacto: "", telefono: "", email: "", direccion: "", productos_sum: ""
                     });
                   }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={guardarProveedor}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
                 >
                   {editandoProveedor ? "Actualizar" : "Guardar"}
                 </button>
