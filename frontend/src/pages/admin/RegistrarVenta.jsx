@@ -351,7 +351,7 @@ export default function RegistrarVenta() {
                                             : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                                             }`}
                                     >
-                                        Recoger
+                                        En Tienda
                                     </button>
                                     <button
                                         onClick={() => setTipoEntrega("domicilio")}

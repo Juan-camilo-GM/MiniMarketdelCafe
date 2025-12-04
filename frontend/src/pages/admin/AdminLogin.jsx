@@ -12,7 +12,7 @@ export default function AdminLogin() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validación básica del formulario
     if (!email || !password) {
       toast.error("Por favor, completa todos los campos", {
@@ -21,14 +21,14 @@ export default function AdminLogin() {
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     // Mostrar toast de carga
     const loadingToast = toast.loading("Verificando credenciales...", {
       duration: Infinity,
     });
-    
+
     try {
       // Intentamos login
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -38,11 +38,11 @@ export default function AdminLogin() {
 
       if (error) {
         toast.dismiss(loadingToast);
-        
+
         // Mensajes de error específicos según el tipo de error
         let mensajeError = "Error al iniciar sesión";
         let duracion = 5000;
-        
+
         if (error.message.includes("Invalid login credentials")) {
           mensajeError = "Credenciales inválidas. Verifica tu email y contraseña.";
           duracion = 6000;
@@ -55,12 +55,12 @@ export default function AdminLogin() {
         } else {
           mensajeError = error.message || "Error al iniciar sesión";
         }
-        
+
         toast.error(mensajeError, {
           icon: <IoCloseCircleOutline size={22} />,
           duration: duracion,
         });
-        
+
         setLoading(false);
         return;
       }
@@ -128,12 +128,12 @@ export default function AdminLogin() {
         ), {
           duration: Infinity,
         });
-        
+
         // Cerrar sesión automáticamente después de un tiempo
         setTimeout(async () => {
           await supabase.auth.signOut();
         }, 10000); // 10 segundos
-        
+
         return;
       }
 
@@ -143,21 +143,21 @@ export default function AdminLogin() {
         icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 3000,
       });
-      
+
       // Pequeña pausa antes de redirigir
       setTimeout(() => {
         navigate("/admin");
       }, 500);
-      
+
     } catch (error) {
       toast.dismiss(loadingToast);
       console.error("Error inesperado:", error);
-      
+
       toast.error("Ocurrió un error inesperado. Por favor, intenta de nuevo.", {
         icon: <IoCloseCircleOutline size={22} />,
         duration: 5000,
       });
-      
+
       setLoading(false);
     }
   };
@@ -165,14 +165,9 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Panel de Administración</h1>
-          <p className="text-gray-600">Ingresa tus credenciales para acceder al sistema</p>
-        </div>
-        
         <form onSubmit={onSubmit} className="w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Inicio de Sesión</h2>
-          
+
           <div className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -188,7 +183,7 @@ export default function AdminLogin() {
                 disabled={loading}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Contraseña
@@ -203,7 +198,7 @@ export default function AdminLogin() {
                 disabled={loading}
               />
             </div>
-            
+
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -219,14 +214,14 @@ export default function AdminLogin() {
               )}
             </button>
           </div>
-          
+
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-500">
               Solo personal autorizado puede acceder a esta sección
             </p>
           </div>
         </form>
-        
+
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-400">
             © {new Date().getFullYear()} Sistema de Administración. Todos los derechos reservados.
