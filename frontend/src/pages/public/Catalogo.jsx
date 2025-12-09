@@ -354,13 +354,13 @@ export default function Catalogo() {
                 </div>
 
                 {/* Texto y precio */}
-                <div className="p-4 pb-3 sm:p-5 sm:pb-3 flex flex-col flex-1">
-                  <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight line-clamp-2">
+                <div className="p-3 pb-2 sm:p-5 sm:pb-3 flex flex-col flex-1">
+                  <h3 className="font-bold text-gray-900 text-sm sm:text-lg leading-snug sm:leading-tight line-clamp-3 min-h-[3.5rem] sm:min-h-0">
                     {p.nombre}
                   </h3>
 
-                  <div className="mt-2 sm:mt-3">
-                    <span className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-700">
+                  <div className="mt-auto pt-2 sm:pt-3">
+                    <span className="text-xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-700">
                       ${parseFloat(p.precio).toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -368,7 +368,7 @@ export default function Catalogo() {
 
                 {/* BOTÓN – Compacto en móvil, grande en escritorio */}
                 {!estaAgotado ? (
-                  <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                  <div className="px-3 pb-3 sm:px-5 sm:pb-5 mt-auto">
                     <button
                       onClick={() => agregarAlCarrito(p)}
                       className="
@@ -377,8 +377,8 @@ export default function Catalogo() {
                         shadow-lg sm:shadow-xl hover:shadow-xl sm:hover:shadow-2xl active:scale-98 transition-all duration-300
                         
                         /* MÓVIL: estilo compacto y elegante */
-                        py-3 text-sm
-                        [&>svg]:w-5 [&>svg]:h-5
+                        py-2.5 text-xs
+                        [&>svg]:w-4 [&>svg]:h-4
                         
                         /* Desde sm (640px): diseño premium grande */
                         sm:py-4 sm:text-lg sm:[&>svg]:w-7 sm:[&>svg]:h-7
@@ -393,10 +393,10 @@ export default function Catalogo() {
                     </button>
                   </div>
                 ) : (
-                  <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+                  <div className="px-3 pb-3 sm:px-5 sm:pb-5 mt-auto">
                     <button
                       disabled
-                      className="w-full py-3 sm:py-4 text-sm sm:text-lg font-bold bg-gray-300 text-gray-600 rounded-xl sm:rounded-2xl cursor-not-allowed"
+                      className="w-full py-2.5 sm:py-4 text-xs sm:text-lg font-bold bg-gray-300 text-gray-600 rounded-xl sm:rounded-2xl cursor-not-allowed"
                     >
                       Sin stock
                     </button>
