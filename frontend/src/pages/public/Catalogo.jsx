@@ -199,7 +199,7 @@ export default function Catalogo() {
       )}
 
       {/* Contenedor del Grid de Productos (Fluid Width) */}
-      <div className="w-full px-4 md:px-8 lg:px-12 pt-[140px] md:pt-[90px]">
+      <div className="w-full px-4 md:px-8 lg:px-12 pt-24 sm:pt-32 md:pt-[90px]">
 
         {cargando ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
