@@ -363,7 +363,7 @@ export default function Catalogo() {
         )}
       </div>
 
-      <CarritoFlotante carrito={carrito} />
+      <CarritoFlotante carrito={carrito} setCarrito={setCarrito} />
     </div>
   );
 }

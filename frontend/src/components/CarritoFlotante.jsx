@@ -48,13 +48,20 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   };
 
   const actualizarCantidad = (id, nuevaCantidad) => {
-    if (nuevaCantidad < 1) return;
+    // Si la cantidad es 0, ofrecer eliminar o eliminar directo
+    if (nuevaCantidad === 0) {
+      eliminarProducto(id);
+      return;
+    }
+
+    // Validar Stock
     const producto = carrito.find((p) => p.id === id);
     if (producto && nuevaCantidad > producto.stock) {
-      setAlertaStock({ id, mensaje: "Stock máximo alcanzado" });
+      setAlertaStock({ id, mensaje: `Solo hay ${producto.stock} disponibles` });
       setTimeout(() => setAlertaStock(null), 2000);
       return;
     }
+
     setCarrito((prev) =>
       prev.map((p) => (p.id === id ? { ...p, cantidad: nuevaCantidad } : p))
     );
@@ -229,7 +236,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
               ) : (
                 <div className="space-y-4">
                   {carrito.map(p => (
-                    <div key={p.id} className="bg-gray-50 rounded-xl p-4 flex gap-4 border">
+                    <div key={p.id} className="bg-gray-50 rounded-xl p-4 flex gap-4 border border-slate-200">
                       {p.imagen_url ? (
                         <img src={p.imagen_url} alt={p.nombre} className="w-16 h-16 rounded-lg object-cover" />
                       ) : (
@@ -239,9 +246,9 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                         <h4 className="font-bold">{p.nombre}</h4>
                         <p className="text-sm text-gray-600">${p.precio.toLocaleString("es-CO")} c/u</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <button onClick={() => actualizarCantidad(p.id, p.cantidad - 1)} className="w-8 h-8 rounded bg-white border cursor-pointer">−</button>
+                          <button onClick={() => actualizarCantidad(p.id, p.cantidad - 1)} className="w-8 h-8 rounded bg-white border border-slate-200 cursor-pointer">−</button>
                           <span className="w-12 text-center font-bold">{p.cantidad}</span>
-                          <button onClick={() => actualizarCantidad(p.id, p.cantidad + 1)} className="w-8 h-8 rounded bg-white border cursor-pointer">+</button>
+                          <button onClick={() => actualizarCantidad(p.id, p.cantidad + 1)} className="w-8 h-8 rounded bg-white border border-slate-200 cursor-pointer">+</button>
                         </div>
                         {alertaStock?.id === p.id && <p className="text-red-600 text-xs mt-1">{alertaStock.mensaje}</p>}
                       </div>
@@ -258,7 +265,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
             </div>
 
             {carrito.length > 0 && (
-              <div className="border-t p-5 bg-gray-50">
+              <div className="border-t border-slate-200 p-5 bg-gray-50">
                 <div className="flex justify-between text-xl font-bold mb-4">
                   <span>Total</span>
                   <span className="text-indigo-600">${total.toLocaleString("es-CO")}</span>
@@ -320,8 +327,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   <div
                     onClick={() => setEntrega("domicilio")}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${entrega === "domicilio"
-                        ? "border-emerald-500 bg-emerald-50 shadow-lg"
-                        : "border-gray-300 hover:border-gray-400"
+                      ? "border-emerald-500 bg-emerald-50 shadow-lg"
+                      : "border-gray-300 hover:border-gray-400"
                       }`}
                   >
                     <div className="flex items-center justify-between">
@@ -341,8 +348,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   <div
                     onClick={() => setEntrega("recoger")}
                     className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${entrega === "recoger"
-                        ? "border-purple-500 bg-purple-50 shadow-lg"
-                        : "border-gray-300 hover:border-gray-400"
+                      ? "border-purple-500 bg-purple-50 shadow-lg"
+                      : "border-gray-300 hover:border-gray-400"
                       }`}
                   >
                     <div className="flex items-center justify-between">
