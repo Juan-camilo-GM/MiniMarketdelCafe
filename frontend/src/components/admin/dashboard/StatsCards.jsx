@@ -9,8 +9,8 @@ export default function StatsCards({
     agotadosCount
 }) {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6 hover:shadow-md transition-all duration-300 group">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-500">Ventas hoy</p>
@@ -24,7 +24,7 @@ export default function StatsCards({
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6 hover:shadow-md transition-all duration-300 group">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-500">Total período</p>
@@ -38,7 +38,7 @@ export default function StatsCards({
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6 hover:shadow-md transition-all duration-300 group">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-500">Pendientes</p>
@@ -50,7 +50,7 @@ export default function StatsCards({
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6 hover:shadow-md transition-all duration-300 group">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-500">Ticket promedio</p>
@@ -64,7 +64,7 @@ export default function StatsCards({
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6 hover:shadow-md transition-all duration-300 group">
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="text-sm font-medium text-slate-500">Stock bajo</p>

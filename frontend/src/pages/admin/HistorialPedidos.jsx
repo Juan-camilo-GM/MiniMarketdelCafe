@@ -215,37 +215,37 @@ export default function HistorialPedidos() {
     switch (tabActivo) {
       case "resumen":
         return (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Date Filter Section */}
-            <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center gap-4 justify-between">
-              <h3 className="font-bold text-slate-700 flex items-center gap-2">
+            <div className="bg-white p-3 md:p-4 rounded-xl border border-slate-100 shadow-sm">
+              <h3 className="font-bold text-slate-700 flex items-center gap-2 text-sm md:text-base mb-3">
                 <IoStatsChartOutline className="text-indigo-500" />
                 Periodo de Análisis
               </h3>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
-                  <span className="text-xs font-semibold text-slate-500">Desde:</span>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 flex-1">
+                  <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Desde:</span>
                   <input
                     type="date"
                     value={fechaInicio}
                     onChange={(e) => setFechaInicio(e.target.value)}
-                    className="bg-transparent text-sm font-medium text-slate-700 outline-none"
+                    className="bg-transparent text-sm font-medium text-slate-700 outline-none w-full"
                   />
                 </div>
-                <span className="text-slate-300">—</span>
-                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
-                  <span className="text-xs font-semibold text-slate-500">Hasta:</span>
+                <span className="text-slate-300 hidden sm:inline">—</span>
+                <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 flex-1">
+                  <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Hasta:</span>
                   <input
                     type="date"
                     value={fechaFin}
                     onChange={(e) => setFechaFin(e.target.value)}
-                    className="bg-transparent text-sm font-medium text-slate-700 outline-none"
+                    className="bg-transparent text-sm font-medium text-slate-700 outline-none w-full"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-8">
               {/* KPIs & Chart take prominence */}
               <div className="xl:col-span-3">
                 <StatsCards
@@ -258,7 +258,7 @@ export default function HistorialPedidos() {
                 />
               </div>
 
-              <div className="xl:col-span-2 space-y-8">
+              <div className="xl:col-span-2 space-y-4 md:space-y-8">
                 <SalesChart data={chartData} />
                 <TopProducts topProductos={topProductos} />
               </div>
@@ -272,7 +272,7 @@ export default function HistorialPedidos() {
 
       case "pedidos":
         return (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Focused view for operations */}
             <DashboardFilters
               filtro={filtro}
@@ -312,11 +312,11 @@ export default function HistorialPedidos() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50/50 p-2 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-3 md:mb-0">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard Comercial</h1>
             <p className="text-lg text-slate-500 mt-1">
@@ -337,7 +337,7 @@ export default function HistorialPedidos() {
         </div>
 
         {/* Tabs Container */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="bg-white md:rounded-2xl md:shadow-sm md:border md:border-slate-100 overflow-hidden">
 
           {/* Mobile Menu Header */}
           <div className="md:hidden p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -432,7 +432,7 @@ export default function HistorialPedidos() {
             </button>
           </div>
 
-          <div className="p-6 bg-slate-50/30 min-h-[500px]">
+          <div className="p-3 md:p-6 bg-slate-50/30 min-h-[500px]">
             {renderContent()}
           </div>
         </div>

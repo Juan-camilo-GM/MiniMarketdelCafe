@@ -11,12 +11,12 @@ export default function DashboardFilters({
     setFechaFin
 }) {
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-6">
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6 space-y-4 md:space-y-6">
+            <h3 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
                 <IoSearch className="text-indigo-500" />
                 Filtros de Búsqueda
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
                 <div>
                     <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Cliente</label>
                     <input
