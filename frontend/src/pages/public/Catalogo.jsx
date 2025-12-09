@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import { obtenerProductos } from "../../lib/productos";
 import { obtenerCategorias } from "../../lib/categorias";
@@ -40,7 +41,8 @@ export default function Catalogo() {
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [catMap, setCatMap] = useState({});
-  const [busqueda, setBusqueda] = useState("");
+  const [searchParams] = useSearchParams();
+  const busqueda = searchParams.get("q") || "";
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [carrito, setCarrito] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -117,6 +119,7 @@ export default function Catalogo() {
   // Resetear página cuando cambian los filtros
   useEffect(() => {
     setPaginaActual(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [busqueda, filtroCategoria]);
 
   // Intersection Observer para cargar más productos automáticamente
@@ -195,63 +198,11 @@ export default function Catalogo() {
 
   return (
     <div className="p-4 md:p-10 bg-gray-50/50  min-h-screen">
-      {/* Header Responsive - Más compacto en móvil */}
-      <div className="text-center mb-6 pt-4 md:mb-12 md:pt-8">
-        <h1 className="text-4xl sm:text-5xl md:text-7xl font-black leading-tight tracking-tight">
-          {/* Palabra principal con gradiente púrpura-índigo exacto */}
-          <span className="text-transparent bg-clip-text 
-                          bg-gradient-to-r from-purple-500 via-indigo-600 to-purple-700
-                          drop-shadow-[0_0_15px_rgba(139,92,246,0.3)] md:drop-shadow-[0_0_25px_rgba(139,92,246,0.45)]">
-            Fresco
-          </span>
-
-          {/* Palabra secundaria en color sólido oscuro para máximo contraste */}
-          <span className="text-gray-900 ml-2">Vecino</span>
-        </h1>
-
-        {/* Subtítulo ajustado */}
-        <p className="text-lg sm:text-2xl md:text-4xl font-bold text-purple-400 mt-2 md:mt-3">
-          Calidad y precio que te conviene
-        </p>
-      </div>
-
-      {/* Filtros Sticky y Elegantes */}
-      <div className="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-md py-4 -mx-4 px-4 md:mx-0 md:px-0 md:rounded-2xl transition-all shadow-sm">
-        <div className="flex flex-col gap-4 max-w-7xl mx-auto">
-
-          {/* Fila 1: Buscador */}
-          <div className="relative w-full">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="¿Qué se te antoja hoy?"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              disabled={cargando}
-              className="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-xl shadow-sm 
-                        focus:ring-2 focus:ring-indigo-500 focus:border-transparent 
-                        transition-all duration-200 text-gray-900 placeholder-gray-400
-                        focus:outline-none text-base"
-            />
-            {busqueda && (
-              <button
-                onClick={() => setBusqueda("")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Fila 2: Chips de Categorías (Scroll Horizontal) */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Filtros Sticky Transparentes (Solo Chips) */}
+      <div className="sticky top-[108px] md:top-[60px] z-40 py-2 transition-all backdrop-blur-xl bg-white/30 -mx-4 sm:-mx-6 lg:-mx-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          {/* Fila: Chips de Categorías */}
+          <div className="flex gap-2 overflow-x-auto pb-0 scrollbar-hide">
             <button
               onClick={() => setFiltroCategoria("")}
               className={`
