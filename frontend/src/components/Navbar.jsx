@@ -78,6 +78,8 @@ export default function Navbar() {
   const links = pathname.startsWith("/admin") && isAdminLogged ? adminLinks : clientLinks;
   const isAdminRoute = pathname.startsWith("/admin") && isAdminLogged;
 
+  const showSearch = !isAdminRoute && pathname !== "/admin/login";
+
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 shadow-2xl transition-all duration-300 ${scrolled ? 'py-2' : 'py-3 sm:py-4'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -104,18 +106,20 @@ export default function Navbar() {
               </div>
             </Link>
 
-            {/* BUSCADOR (Visible solo en Desktop) */}
-            <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg relative group">
-              <input
-                type="text"
-                placeholder="¿Qué se te antoja hoy?"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-full bg-white/10 border border-white/20 text-white placeholder-indigo-200 
-                          focus:outline-none focus:bg-white/20 focus:scale-105 transition-all outline-none"
-              />
-              <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-200 group-focus-within:text-white transition-colors" />
-            </form>
+            {/* BUSCADOR (Visible solo en Desktop y Cliente, NO en Login) */}
+            {showSearch && (
+              <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-lg relative group">
+                <input
+                  type="text"
+                  placeholder="¿Qué se te antoja hoy?"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-full bg-white/10 border border-white/20 text-white placeholder-indigo-200 
+                            focus:outline-none focus:bg-white/20 focus:scale-105 transition-all outline-none"
+                />
+                <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-200 group-focus-within:text-white transition-colors" />
+              </form>
+            )}
 
             {/* MENÚ DE ESCRITORIO */}
             <ul className="hidden lg:flex items-center gap-1">
@@ -166,20 +170,22 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* SEGUNDA FILA: Buscador Móvil (Visible solo en móvil) */}
-          <div className="md:hidden pb-1">
-            <form onSubmit={handleSearch} className="relative w-full">
-              <input
-                type="text"
-                placeholder="¿Qué se te antoja hoy?"
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-indigo-200 
-                          focus:outline-none focus:bg-white/20 transition-all text-sm"
-              />
-              <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-200" />
-            </form>
-          </div>
+          {/* SEGUNDA FILA: Buscador Móvil (Visible solo en móvil y cliente, NO en Login) */}
+          {showSearch && (
+            <div className="md:hidden pb-1">
+              <form onSubmit={handleSearch} className="relative w-full">
+                <input
+                  type="text"
+                  placeholder="¿Qué se te antoja hoy?"
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-indigo-200 
+                            focus:outline-none focus:bg-white/20 transition-all text-sm"
+                />
+                <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-indigo-200" />
+              </form>
+            </div>
+          )}
         </div>
       </div>
 
