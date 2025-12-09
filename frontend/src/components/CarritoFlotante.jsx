@@ -446,7 +446,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   </label>
                   <input
                     type="number"
-                    placeholder="Ej: 50000"
+                    placeholder="Ej: 50000 (sin puntos ni comas)"
                     value={cambio}
                     onChange={(e) => setCambio(e.target.value)}
                     className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500"
