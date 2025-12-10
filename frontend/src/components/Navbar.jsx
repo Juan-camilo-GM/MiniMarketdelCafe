@@ -142,7 +142,7 @@ export default function Navbar() {
                       <li key={link.to}>
                         <button
                           onClick={() => setIsSidebarOpen(true)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer
                                 ${isActive || isSidebarOpen ? "bg-white/20 text-white shadow-lg border border-white/20" : "text-indigo-100 hover:bg-white/10 hover:text-white"}`}
                         >
                           {link.icon}
@@ -237,7 +237,7 @@ export default function Navbar() {
             onClick={() => setIsSidebarOpen(false)}
             className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/80 hover:text-white"
           >
-            <IoClose className="text-2xl" />
+            <IoClose className="text-2xl cursor-pointer" />
           </button>
         </div>
 
@@ -272,7 +272,7 @@ export default function Navbar() {
           {!isAdminRoute && (
             <div className="space-y-2">
               <div className="flex items-center justify-between px-4 mb-2">
-                <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Cátalogo</span>
+                <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Catálogo</span>
                 <Link to="/catalogo" onClick={() => setIsSidebarOpen(false)} className="text-xs text-white/80 hover:text-white underline">Ver todo</Link>
               </div>
 
