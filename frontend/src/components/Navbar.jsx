@@ -263,33 +263,35 @@ export default function Navbar() {
             </nav>
           )}
 
-          {/* Categories Section */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-4 mb-2">
-              <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Explorar</span>
-              <Link to="/catalogo" onClick={() => setIsSidebarOpen(false)} className="text-xs text-white/80 hover:text-white underline">Ver todo</Link>
-            </div>
+          {/* Categories Section - Solo en vista pública */}
+          {!isAdminRoute && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-4 mb-2">
+                <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Explorar</span>
+                <Link to="/catalogo" onClick={() => setIsSidebarOpen(false)} className="text-xs text-white/80 hover:text-white underline">Ver todo</Link>
+              </div>
 
-            <div className="grid gap-1">
-              {categorias.map(cat => {
-                const isActive = currentCategory === cat.id.toString();
-                return (
-                  <Link
-                    key={cat.id}
-                    to={`/catalogo?categoria=${cat.id}`}
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all border border-transparent
-                                    ${isActive
-                        ? 'bg-white text-purple-700 shadow-xl border-white scale-[1.02]'
-                        : 'text-indigo-100 hover:bg-white/10 hover:ml-2'}`}
-                  >
-                    {cat.nombre}
-                    {isActive && <IoChevronForward />}
-                  </Link>
-                )
-              })}
+              <div className="grid gap-1">
+                {categorias.map(cat => {
+                  const isActive = currentCategory === cat.id.toString();
+                  return (
+                    <Link
+                      key={cat.id}
+                      to={`/catalogo?categoria=${cat.id}`}
+                      onClick={() => setIsSidebarOpen(false)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all border border-transparent
+                                      ${isActive
+                          ? 'bg-white text-purple-700 shadow-xl border-white scale-[1.02]'
+                          : 'text-indigo-100 hover:bg-white/10 hover:ml-2'}`}
+                    >
+                      {cat.nombre}
+                      {isActive && <IoChevronForward />}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </nav>
