@@ -85,8 +85,9 @@ export default function Navbar() {
 
   const links = pathname.startsWith("/admin") && isAdminLogged ? adminLinks : clientLinks;
   const isAdminRoute = pathname.startsWith("/admin") && isAdminLogged;
+  const isLoginRoute = pathname === "/admin/login";
 
-  const showSearch = !isAdminRoute && pathname !== "/admin/login";
+  const showSearch = !isAdminRoute && !isLoginRoute;
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 shadow-2xl transition-all duration-300 ${scrolled ? 'py-4' : 'py-4 sm:py-6'}`}>
@@ -130,69 +131,73 @@ export default function Navbar() {
             )}
 
             {/* MENÚ DE ESCRITORIO */}
-            <ul className="hidden lg:flex items-center gap-1">
-              {links.map((link) => {
-                const isActive = pathname === link.to;
+            {!isLoginRoute && (
+              <ul className="hidden lg:flex items-center gap-1">
+                {links.map((link) => {
+                  const isActive = pathname === link.to;
 
-                // Special rendering for 'Catálogo' to include Dropdown
-                if (link.label === "Catálogo") {
+                  // Special rendering for 'Catálogo' to include Dropdown
+                  if (link.label === "Catálogo") {
+                    return (
+                      <li key={link.to}>
+                        <button
+                          onClick={() => setIsSidebarOpen(true)}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
+                                ${isActive || isSidebarOpen ? "bg-white/20 text-white shadow-lg border border-white/20" : "text-indigo-100 hover:bg-white/10 hover:text-white"}`}
+                        >
+                          {link.icon}
+                          <span>{link.label}</span>
+                        </button>
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={link.to}>
-                      <button
-                        onClick={() => setIsSidebarOpen(true)}
+                      <Link
+                        to={link.to}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
-                                ${isActive || isSidebarOpen ? "bg-white/20 text-white shadow-lg border border-white/20" : "text-indigo-100 hover:bg-white/10 hover:text-white"}`}
+                        ${isActive
+                            ? "bg-white/20 text-white shadow-lg border border-white/20"
+                            : "text-indigo-100 hover:text-white hover:bg-white/10"
+                          }`}
                       >
                         {link.icon}
                         <span>{link.label}</span>
-                      </button>
+                      </Link>
                     </li>
                   );
-                }
+                })}
 
-                return (
-                  <li key={link.to}>
-                    <Link
-                      to={link.to}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200
-                        ${isActive
-                          ? "bg-white/20 text-white shadow-lg border border-white/20"
-                          : "text-indigo-100 hover:text-white hover:bg-white/10"
-                        }`}
-                    >
-                      {link.icon}
-                      <span>{link.label}</span>
-                    </Link>
-                  </li>
-                );
-              })}
-
-              {/* Opciones extra solo para Admin */}
-              {isAdminRoute && (
-                <>
-                  <li className="ml-4 pl-4 border-l border-white/20 flex items-center gap-3">
-                    <BotonCerrarTienda />
-                  </li>
-                  <li>
-                    <button
-                      onClick={() => supabase.auth.signOut()}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500/20 text-rose-100 hover:bg-rose-500 hover:text-white font-medium transition-all duration-200 border border-rose-500/20"
-                    >
-                      <IoLogOut className="text-lg" />
-                      Salir
-                    </button>
-                  </li>
-                </>
-              )}
-            </ul>
+                {/* Opciones extra solo para Admin */}
+                {isAdminRoute && (
+                  <>
+                    <li className="ml-4 pl-4 border-l border-white/20 flex items-center gap-3">
+                      <BotonCerrarTienda />
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => supabase.auth.signOut()}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500/20 text-rose-100 hover:bg-rose-500 hover:text-white font-medium transition-all duration-200 border border-rose-500/20"
+                      >
+                        <IoLogOut className="text-lg" />
+                        Salir
+                      </button>
+                    </li>
+                  </>
+                )}
+              </ul>
+            )}
 
             {/* BOTÓN MÓVIL (Hamburguesa) */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
-            >
-              <IoMenu className="text-3xl" />
-            </button>
+            {!isLoginRoute && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg text-white hover:bg-white/10 transition-colors"
+              >
+                <IoMenu className="text-3xl" />
+              </button>
+            )}
           </div>
 
           {/* SEGUNDA FILA: Buscador Móvil (Visible solo en móvil y cliente, NO en Login) */}
