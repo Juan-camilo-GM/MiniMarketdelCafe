@@ -163,7 +163,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-6rem)] flex items-center justify-center p-4 pt-20 bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-[calc(100vh-6rem)] flex items-center justify-center p-4 pt-8 md:pt-20 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="w-full max-w-md">
         <form onSubmit={onSubmit} className="w-full bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Inicio de Sesión</h2>
