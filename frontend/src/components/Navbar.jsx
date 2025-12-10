@@ -272,7 +272,7 @@ export default function Navbar() {
           {!isAdminRoute && (
             <div className="space-y-2">
               <div className="flex items-center justify-between px-4 mb-2">
-                <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Explorar</span>
+                <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Cátalogo</span>
                 <Link to="/catalogo" onClick={() => setIsSidebarOpen(false)} className="text-xs text-white/80 hover:text-white underline">Ver todo</Link>
               </div>
 
