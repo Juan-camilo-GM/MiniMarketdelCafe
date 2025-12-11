@@ -178,7 +178,7 @@ export default function Navbar() {
                     <li>
                       <button
                         onClick={() => supabase.auth.signOut()}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500/20 text-rose-100 hover:bg-rose-500 hover:text-white font-medium transition-all duration-200 border border-rose-500/20"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/15 font-medium transition-all duration-200 border border-white/20"
                       >
                         <IoLogOut className="text-lg" />
                         Salir
@@ -258,9 +258,12 @@ export default function Navbar() {
                 </Link>
               ))}
 
+              {/* Botón de Cerrar/Abrir Tienda */}
+              <BotonCerrarTienda variant="sidebar" />
+
               <button
                 onClick={() => { supabase.auth.signOut(); setIsSidebarOpen(false); }}
-                className="w-full flex items-center gap-4 px-4 py-3 text-rose-200 hover:bg-rose-500/20 rounded-xl font-bold transition-all text-lg"
+                className="w-full flex items-center gap-4 px-4 py-3 text-white hover:bg-white/10 rounded-xl font-medium transition-all text-base border border-white/20"
               >
                 <IoLogOut className="text-xl" />
                 Cerrar Sesión
