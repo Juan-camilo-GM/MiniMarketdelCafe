@@ -34,7 +34,7 @@ export default function BannerOfertas({ productos, agregarAlCarrito }) {
                 {/* === DECORACIÓN DE FONDO (Sutil) === */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-                <div className="flex flex-row items-center p-4 md:py-8 md:px-16 min-h-[140px] md:min-h-[180px]">
+                <div className="flex flex-row items-center p-4 md:px-16 md:py-4 min-h-[140px] md:min-h-[120px]">
 
                     {/* === IMAGEN (Izquierda) === */}
                     <div className="relative w-28 h-28 sm:w-32 sm:h-32 md:w-48 md:h-48 flex-shrink-0 mr-4 md:mr-8 perspective-1000">
