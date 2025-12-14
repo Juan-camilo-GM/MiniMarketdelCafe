@@ -362,7 +362,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                           <p className="font-bold text-emerald-700">Envío a domicilio</p>
                           <p className="text-sm text-gray-600">
                             {costoEnvio === 0 && minimoGratisConfig > 0 && total >= minimoGratisConfig ? (
-                              <span className="text-emerald-600 font-bold">¡Gratis! 🎉</span>
+                              <span className="text-emerald-600 font-bold">¡Gratis!</span>
                             ) : (
                               `Te lo llevamos donde estés • +$${Number(costoEnvioConfig).toLocaleString("es-CO")}`
                             )}
@@ -499,7 +499,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   <div className="space-y-1 mt-2">
                     <p className="text-sm text-center text-gray-600">
                       {costoEnvio === 0 && minimoGratisConfig > 0 && total >= minimoGratisConfig
-                        ? "🎉 ¡Envío gratis aplicado!"
+                        ? "¡Envío gratis aplicado!"
                         : "Incluye envío a domicilio"}
                     </p>
                   </div>
