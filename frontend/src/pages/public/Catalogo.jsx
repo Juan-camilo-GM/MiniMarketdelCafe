@@ -8,6 +8,8 @@ import CarritoFlotante from "../../components/CarritoFlotante";
 import toast from "react-hot-toast";
 import { IoCheckmarkCircleOutline, IoAlertCircleOutline, IoSearch, IoGrid, IoClose } from "react-icons/io5";
 
+import BannerOfertas from "../../components/BannerOfertas";
+
 // Componente de Skeleton para tarjetas de producto
 function ProductoSkeleton() {
   return (
@@ -210,7 +212,14 @@ export default function Catalogo() {
       )}
 
       {/* Contenedor del Grid de Productos (Fluid Width) */}
-      <div className={`w-full px-4 md:px-8 lg:px-12 ${categoriaUrl ? 'pt-4' : 'pt-10 sm:pt-24 md:pt-[80px]'}`}>
+      <div id="catalogo" className={`w-full px-4 md:px-8 lg:px-12 ${categoriaUrl ? 'pt-4' : 'pt-4'}`}>
+
+        {/* Banner de Ofertas (Solo si no hay categoría seleccionada ni búsqueda y no está cargando) */}
+        {!cargando && !categoriaUrl && !busqueda && (
+          <div className="-mt-16 md:-mt-20 mb-8">
+            <BannerOfertas productos={productos} agregarAlCarrito={agregarAlCarrito} />
+          </div>
+        )}
 
         {cargando ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">

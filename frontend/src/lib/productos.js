@@ -11,6 +11,7 @@ export async function obtenerProductos() {
       stock,
       categoria_id,
       imagen_url,
+      is_featured,
       categorias (
         id,
         nombre
