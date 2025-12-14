@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { IoCart, IoTrashBin, IoClose, IoCash, IoCloudUpload } from "react-icons/io5";
 import { agregarPedido } from "../lib/productos";
+import { obtenerConfiguracion } from "../lib/config";
 import toast from "react-hot-toast";
 
 export default function CarritoFlotante({ carrito, setCarrito }) {
@@ -12,6 +13,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const [cliente, setCliente] = useState({ nombre: "", direccion: "" });
   const [entrega, setEntrega] = useState("recoger");
   const [costoEnvio, setCostoEnvio] = useState(0);
+  const [costoEnvioConfig, setCostoEnvioConfig] = useState(2000); // Valor por defecto visual
+  const [minimoGratisConfig, setMinimoGratisConfig] = useState(0);
   const [pago, setPago] = useState("efectivo");
   const [cambio, setCambio] = useState("");
 
@@ -29,8 +32,26 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const totalFinal = total + costoEnvio;
 
   useEffect(() => {
-    setCostoEnvio(entrega === "domicilio" ? 2000 : 0);
-  }, [entrega]);
+    async function cargarConfig() {
+      const valEnvio = await obtenerConfiguracion("costo_envio");
+      const valMinimo = await obtenerConfiguracion("envio_gratis_minimo");
+      if (valEnvio !== null) setCostoEnvioConfig(Number(valEnvio));
+      if (valMinimo !== null) setMinimoGratisConfig(Number(valMinimo));
+    }
+    cargarConfig();
+  }, []);
+
+  useEffect(() => {
+    let costo = 0;
+    if (entrega === "domicilio") {
+      costo = costoEnvioConfig;
+      // Si hay umbral de envío gratis y se supera
+      if (minimoGratisConfig > 0 && total >= minimoGratisConfig) {
+        costo = 0;
+      }
+    }
+    setCostoEnvio(costo);
+  }, [entrega, costoEnvioConfig, minimoGratisConfig, total]);
 
   const toggleModal = () => setIsOpen(!isOpen);
   const abrirCheckout = () => {
@@ -128,6 +149,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
     ${carrito.map(p => `• ${p.nombre} × ${p.cantidad} → $${(p.precio * p.cantidad).toLocaleString("es-CO")}`).join("\n")}
 
     *Subtotal:* $${total.toLocaleString("es-CO")}
+    ${entrega === "domicilio" && costoEnvio === 0 && minimoGratisConfig > 0 ? "🎉 *¡Envío Gratis Aplicado!*\n" : ""}
     ${costoEnvio > 0 ? `*Envío:* $${costoEnvio.toLocaleString("es-CO")}\n` : ""}*TOTAL A PAGAR:* *$${totalFinal.toLocaleString("es-CO")}*
 
     ${pago === "efectivo"
@@ -338,7 +360,18 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                         </div>
                         <div>
                           <p className="font-bold text-emerald-700">Envío a domicilio</p>
-                          <p className="text-sm text-gray-600">Te lo llevamos donde estés • +$2.000</p>
+                          <p className="text-sm text-gray-600">
+                            {costoEnvio === 0 && minimoGratisConfig > 0 && total >= minimoGratisConfig ? (
+                              <span className="text-emerald-600 font-bold">¡Gratis! 🎉</span>
+                            ) : (
+                              `Te lo llevamos donde estés • +$${Number(costoEnvioConfig).toLocaleString("es-CO")}`
+                            )}
+                          </p>
+                          {minimoGratisConfig > 0 && total < minimoGratisConfig && (
+                            <p className="text-xs text-indigo-500 mt-1">
+                              ¡Gratis por compras desde ${Number(minimoGratisConfig).toLocaleString("es-CO")}!
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -463,7 +496,13 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   </span>
                 </div>
                 {entrega === "domicilio" && (
-                  <p className="text-sm text-center text-gray-600 mt-2">Incluye envío a domicilio</p>
+                  <div className="space-y-1 mt-2">
+                    <p className="text-sm text-center text-gray-600">
+                      {costoEnvio === 0 && minimoGratisConfig > 0 && total >= minimoGratisConfig
+                        ? "🎉 ¡Envío gratis aplicado!"
+                        : "Incluye envío a domicilio"}
+                    </p>
+                  </div>
                 )}
               </div>
 

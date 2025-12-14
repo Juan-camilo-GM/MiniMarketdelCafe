@@ -1,0 +1,82 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/components/BannerOfertas.jsx
+  11:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   9 |         // Filtrar productos destacados
+  10 |         const destacados = productos.filter(p => p.is_featured);
+> 11 |         setOfertas(destacados);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  12 |     }, [productos]);
+  13 |
+  14 |     // Auto-slide para el carrusel  react-hooks/set-state-in-effect
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/components/CarritoFlotante.jsx
+    1:31  error  'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                    no-unused-vars
+   64:5   error  'setComprobante' is not defined                                                                  no-undef
+  130:9   error  'metodoPagoTexto' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  208:14  error  'err' is defined but never used                                                                  no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/components/Navbar.jsx
+  25:7  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  23 |     const q = searchParams.get("q") || "";
+  24 |     if (q !== busqueda) {
+> 25 |       setBusqueda(q);
+     |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  26 |     }
+  27 |   }, [searchParams]);
+  28 |  react-hooks/set-state-in-effect
+  27:6  warning  React Hook useEffect has a missing dependency: 'busqueda'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/components/admin/dashboard/LowStockAlerts.jsx
+  35:27  error  'isCritico' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/components/proveedores/FacturasProveedor.jsx
+  86:40  error  'proveedores' is defined but never used  no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/components/proveedores/PedidosProveedor.jsx
+  12:38  error  'proveedores' is defined but never used  no-unused-vars
+  12:51  error  'productos' is defined but never used    no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/context/AuthContext.jsx
+  78:14  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/hooks/useDashboardData.js
+  4:34  error  'tabActivo' is defined but never used  no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/hooks/useOrderActions.jsx
+  1:10  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/lib/storage.js
+  15:17  error  'uploadData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/pages/admin/Admin.jsx
+   94:7  error  Duplicate key 'categoria_id'  no-dupe-keys
+  133:9  error  Duplicate key 'stock'         no-dupe-keys
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/pages/admin/HistorialPedidos.jsx
+  12:3  error  Parsing error: Identifier 'IoListOutline' has already been declared
+
+/home/camilo/Proyectos/MiniMarketdelCafe/frontend/src/pages/public/Catalogo.jsx
+    4:10  error    'createPortal' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                          no-unused-vars
+   35:10  error    'categorias' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                   no-unused-vars
+  137:43  warning  The ref value 'observerTarget.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'observerTarget.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+✖ 21 problems (19 errors, 2 warnings)
+

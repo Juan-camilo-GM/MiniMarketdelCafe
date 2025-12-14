@@ -116,7 +116,6 @@ export default function ProveedoresList({ proveedores, onRefresh }) {
       if (error) throw error;
 
       toast.success(`Proveedor ${editandoProveedor ? "actualizado" : "registrado"} exitosamente`, {
-        icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 4000,
       });
 
@@ -205,7 +204,6 @@ export default function ProveedoresList({ proveedores, onRefresh }) {
       if (error) throw error;
 
       toast.success("Proveedor eliminado exitosamente", {
-        icon: <IoTrashOutline size={22} />,
         duration: 4000,
       });
 

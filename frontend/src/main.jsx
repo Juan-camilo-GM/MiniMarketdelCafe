@@ -13,13 +13,22 @@ import { Toaster } from "react-hot-toast";
 // ← NUEVAS IMPORTACIONES (solo estas dos)
 import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
+import { IoCheckmarkCircle } from "react-icons/io5";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <Toaster position="top-right" />
-
-
     <AuthProvider>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          success: {
+            icon: <IoCheckmarkCircle className="text-emerald-500 text-xl" />,
+            style: {
+              fontWeight: '500',
+            },
+          },
+        }}
+      />
       <Routes>
         {/* Layout público */}
         <Route element={<LayoutPublic />}>

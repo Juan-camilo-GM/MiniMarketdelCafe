@@ -153,7 +153,6 @@ export default function Productos() {
         );
 
         toast.success("Producto actualizado correctamente", {
-          icon: <IoCheckmarkCircleOutline size={22} />,
           duration: 4000,
         });
       } else {
@@ -169,7 +168,6 @@ export default function Productos() {
         setProductos((prev) => [...prev, productoFinal]);
 
         toast.success("Producto agregado correctamente", {
-          icon: <IoCheckmarkCircleOutline size={22} />,
           duration: 4000,
         });
       }
@@ -201,7 +199,6 @@ export default function Productos() {
       await eliminarProducto(productoAEliminar);
       setProductos(prev => prev.filter(p => p.id !== productoAEliminar));
       toast.success("Producto eliminado correctamente", {
-        icon: <IoTrashOutline size={22} />,
         duration: 4000,
       });
       setProductoAEliminar(null);

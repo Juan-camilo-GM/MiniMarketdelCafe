@@ -157,21 +157,21 @@ export default function Catalogo() {
           p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
         )
       );
-      toast.success(`"${producto.nombre}" +1 agregado al carrito`, { icon: <IoCheckmarkCircleOutline size={22} /> });
+      toast.success(`"${producto.nombre}" +1 agregado al carrito`);
     } else {
       if (producto.stock < 1) {
         toast.error(`No hay stock disponible de "${producto.nombre}"`, { icon: <IoAlertCircleOutline size={22} /> });
         return;
       }
       setCarrito((prev) => [...prev, { ...producto, cantidad: 1 }]);
-      toast.success(`"${producto.nombre}" agregado al carrito`, { icon: <IoCheckmarkCircleOutline size={22} /> });
+      toast.success(`"${producto.nombre}" agregado al carrito`);
     }
   };
 
   const actualizarCantidad = (productoId, nuevaCantidad) => {
     if (nuevaCantidad <= 0) {
       setCarrito((prev) => prev.filter((p) => p.id !== productoId));
-      toast.success("Producto eliminado del carrito", { icon: <IoCheckmarkCircleOutline size={22} /> });
+      toast.success("Producto eliminado del carrito");
     } else {
       const productoEnCarrito = carrito.find((p) => p.id === productoId);
       const productoOriginal = productos.find((p) => p.id === productoId);
@@ -186,7 +186,7 @@ export default function Catalogo() {
             p.id === productoId ? { ...p, cantidad: nuevaCantidad } : p
           )
         );
-        toast.success(`Cantidad de "${productoOriginal.nombre}" actualizada`, { icon: <IoCheckmarkCircleOutline size={22} /> });
+        toast.success(`Cantidad de "${productoOriginal.nombre}" actualizada`);
       }
     }
   };

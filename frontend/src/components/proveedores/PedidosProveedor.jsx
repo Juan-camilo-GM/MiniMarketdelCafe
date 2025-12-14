@@ -217,7 +217,6 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
       }
 
       toast.success(mensaje, {
-        icon: icono,
         duration: 4000,
       });
 
@@ -259,7 +258,6 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
       if (error) throw error;
 
       toast.success("Pedido eliminado exitosamente", {
-        icon: <IoTrashOutline size={22} />,
         duration: 4000,
       });
 

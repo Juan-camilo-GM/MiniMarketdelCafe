@@ -102,8 +102,7 @@ export const useOrderActions = (fetchPedidos, fetchProductosStockBajo) => {
                     ? "Pedido confirmado y stock actualizado"
                     : nuevoEstado === "cancelado"
                         ? "Pedido cancelado y stock devuelto"
-                        : "Estado actualizado correctamente",
-                { icon: <IoCheckmarkCircleOutline size={24} /> }
+                        : "Estado actualizado correctamente"
             );
 
             if (fetchPedidos) fetchPedidos();

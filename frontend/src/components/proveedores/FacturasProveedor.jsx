@@ -165,7 +165,6 @@ const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
       if (error) throw error;
 
       toast.success("Factura eliminada exitosamente", {
-        icon: <IoTrashOutline size={22} />,
         duration: 4000,
       });
 
@@ -345,7 +344,6 @@ const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
       if (error) throw error;
 
       toast.success("Factura actualizada exitosamente", {
-        icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 4000,
       });
 

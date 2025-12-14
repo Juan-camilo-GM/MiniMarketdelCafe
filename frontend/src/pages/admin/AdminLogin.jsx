@@ -140,7 +140,6 @@ export default function AdminLogin() {
       // Login exitoso
       toast.dismiss(loadingToast);
       toast.success("¡Bienvenido administrador!", {
-        icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 3000,
       });
 

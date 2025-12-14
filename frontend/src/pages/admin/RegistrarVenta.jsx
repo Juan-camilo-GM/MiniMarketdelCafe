@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "../../lib/supabase";
 import { obtenerProductos } from "../../lib/productos";
 import { obtenerCategorias } from "../../lib/categorias";
+import { obtenerConfiguracion, guardarConfiguracion } from "../../lib/config";
 import toast from "react-hot-toast";
 import {
     IoSearch,
@@ -15,7 +16,9 @@ import {
     IoGrid,
     IoLocationOutline,
     IoWalletOutline,
-    IoClose
+    IoClose,
+    IoSettingsOutline,
+    IoSaveOutline
 } from "react-icons/io5";
 
 export default function RegistrarVenta() {
@@ -37,6 +40,12 @@ export default function RegistrarVenta() {
     const [mostrarCarrito, setMostrarCarrito] = useState(false);
     const [modalConfirmacion, setModalConfirmacion] = useState(false);
 
+    // Configuración de Envío
+    const [costoEnvioConfig, setCostoEnvioConfig] = useState(2000);
+    const [minimoGratisConfig, setMinimoGratisConfig] = useState(0);
+    const [configOpen, setConfigOpen] = useState(false);
+    const [loadingConfig, setLoadingConfig] = useState(false);
+
     useEffect(() => {
         cargarDatos();
     }, []);
@@ -56,6 +65,35 @@ export default function RegistrarVenta() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Cargar configuración de envío
+    useEffect(() => {
+        async function cargarConfig() {
+            const valEnvio = await obtenerConfiguracion("costo_envio");
+            const valMinimo = await obtenerConfiguracion("envio_gratis_minimo");
+            if (valEnvio !== null) setCostoEnvioConfig(Number(valEnvio));
+            if (valMinimo !== null) setMinimoGratisConfig(Number(valMinimo));
+        }
+        cargarConfig();
+    }, []);
+
+
+
+    const guardarConfig = async () => {
+        setLoadingConfig(true);
+        const [okEnvio, okMinimo] = await Promise.all([
+            guardarConfiguracion("costo_envio", costoEnvioConfig),
+            guardarConfiguracion("envio_gratis_minimo", minimoGratisConfig)
+        ]);
+
+        if (okEnvio && okMinimo) {
+            toast.success("Configuración actualizada correctamente");
+            setConfigOpen(false);
+        } else {
+            toast.error("Error al actualizar algunos valores");
+        }
+        setLoadingConfig(false);
     };
 
     const productosFiltrados = useMemo(() => {
@@ -109,7 +147,13 @@ export default function RegistrarVenta() {
     };
 
     const total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
-    const costoEnvio = tipoEntrega === "domicilio" ? 2000 : 0;
+
+    // Cálculo de Envío con lógica de umbral
+    const costoEnvio = useMemo(() => {
+        if (tipoEntrega !== "domicilio") return 0;
+        if (minimoGratisConfig > 0 && total >= minimoGratisConfig) return 0;
+        return costoEnvioConfig;
+    }, [tipoEntrega, total, costoEnvioConfig, minimoGratisConfig]);
     const totalFinal = total + costoEnvio;
     const cambio = (pagaCon && metodoPago === "efectivo") ? (Number(pagaCon) - totalFinal) : 0;
 
@@ -216,6 +260,13 @@ export default function RegistrarVenta() {
                             </h1>
                             <p className="text-slate-500 text-sm">Selecciona productos para agregar a la orden</p>
                         </div>
+                        <button
+                            onClick={() => setConfigOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold rounded-xl transition-all shadow-sm group"
+                        >
+                            <IoSettingsOutline className="group-hover:rotate-90 transition-transform duration-500" />
+                            <span className="hidden sm:inline">Configuración Domicilio</span>
+                        </button>
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-4">
@@ -275,10 +326,10 @@ export default function RegistrarVenta() {
                                             ${parseInt(producto.precio).toLocaleString("es-CO")}
                                         </p>
                                         <span className={`text-xs font-bold px-2 py-1 rounded-full ${producto.stock <= 0
-                                                ? "bg-rose-100 text-rose-600"
-                                                : producto.stock <= 5
-                                                    ? "bg-orange-100 text-orange-600"
-                                                    : "bg-slate-100 text-slate-600"
+                                            ? "bg-rose-100 text-rose-600"
+                                            : producto.stock <= 5
+                                                ? "bg-orange-100 text-orange-600"
+                                                : "bg-slate-100 text-slate-600"
                                             }`}>
                                             {producto.stock <= 0 ? "AGOTADO" : `${producto.stock} und`}
                                         </span>
@@ -360,9 +411,14 @@ export default function RegistrarVenta() {
                                             : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                                             }`}
                                     >
-                                        Domicilio (+$2k)
+                                        Domicilio (+${costoEnvioConfig.toLocaleString()})
                                     </button>
                                 </div>
+                                {minimoGratisConfig > 0 && (
+                                    <p className="text-xs text-indigo-600 font-medium text-center mt-1">
+                                        ¡Envío gratis por compras superiores a ${minimoGratisConfig.toLocaleString()}!
+                                    </p>
+                                )}
 
                                 {/* Dirección si es domicilio */}
                                 {tipoEntrega === "domicilio" && (
@@ -527,6 +583,78 @@ export default function RegistrarVenta() {
                                 >
                                     Confirmar
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Configuración */}
+            {configOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                    <IoSettingsOutline className="text-indigo-600" />
+                                    Configuración Domicilio
+                                </h3>
+                                <button onClick={() => setConfigOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <IoClose size={24} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Costo de Envío (Base)</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={costoEnvioConfig}
+                                            onChange={(e) => setCostoEnvioConfig(e.target.value)}
+                                            className="w-full pl-8 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Envío Gratis desde:</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={minimoGratisConfig}
+                                            onChange={(e) => setMinimoGratisConfig(e.target.value)}
+                                            className="w-full pl-8 pr-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-800"
+                                            placeholder="0 para desactivar"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">Si la compra supera este monto, el envío será $0.</p>
+                                </div>
+
+                                <div className="pt-2 flex gap-3">
+                                    <button
+                                        onClick={() => setConfigOpen(false)}
+                                        className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={guardarConfig}
+                                        disabled={loadingConfig}
+                                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                    >
+                                        {loadingConfig ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <IoSaveOutline /> Guardar
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

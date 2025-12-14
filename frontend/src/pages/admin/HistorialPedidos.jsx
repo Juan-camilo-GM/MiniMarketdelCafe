@@ -11,6 +11,7 @@ import {
   IoMenu,
   IoClose
 } from "react-icons/io5";
+import toast from "react-hot-toast";
 
 // Hooks
 import { useDashboardData } from "../../hooks/useDashboardData";
@@ -273,6 +274,7 @@ export default function HistorialPedidos() {
       case "pedidos":
         return (
           <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Focused view for operations */}
             {/* Focused view for operations */}
             <DashboardFilters
               filtro={filtro}

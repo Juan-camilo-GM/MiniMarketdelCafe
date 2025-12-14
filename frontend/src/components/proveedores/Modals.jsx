@@ -182,7 +182,6 @@ export const Modals = ({
       if (error) throw error;
 
       toast.success("Factura registrada exitosamente", {
-        icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 4000,
       });
 
@@ -239,7 +238,6 @@ export const Modals = ({
       if (error) throw error;
 
       toast.success("Pedido registrado exitosamente", {
-        icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 4000,
       });
 
@@ -279,7 +277,6 @@ export const Modals = ({
       if (error) throw error;
 
       toast.success("Proveedor registrado exitosamente", {
-        icon: <IoCheckmarkCircleOutline size={22} />,
         duration: 4000,
       });
 
