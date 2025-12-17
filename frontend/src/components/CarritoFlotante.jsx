@@ -97,18 +97,26 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
     if (!cliente.nombre.trim()) return setAlertaCheckout("Ingresa tu nombre");
     if (entrega === "domicilio" && !cliente.direccion.trim()) return setAlertaCheckout("Ingresa la dirección");
 
+    // Validar carrito antes de crear el pedido
+    const carritoLimpio = carrito
+      .map(p => ({
+        id: p?.id ?? null,
+        nombre: p?.nombre ?? "",
+        cantidad: Number(p?.cantidad ?? 0) || 0,
+        precio: Number(p?.precio ?? 0) || 0,
+      }))
+      .filter(p => p.id !== null && p.nombre !== "" && p.cantidad > 0 && p.precio >= 0);
+
+    if (carritoLimpio.length === 0) {
+      setAlertaCheckout("El carrito contiene items inválidos o está vacío. Revísalo o reinícialo.");
+      return;
+    }
+
     try {
       const pedido = {
         cliente_nombre: cliente.nombre.trim(),
         cliente_direccion: entrega === "domicilio" ? cliente.direccion.trim() : null,
-        productos: carrito
-          .map(p => ({
-            id: p?.id ?? null,
-            nombre: p?.nombre ?? "",
-            cantidad: Number(p?.cantidad ?? 0) || 0,
-            precio: Number(p?.precio ?? 0) || 0,
-          }))
-          .filter(p => p.id !== null && p.nombre !== "" && p.cantidad > 0),
+        productos: carritoLimpio,
         subtotal: Number(total),
         costo_envio: Number(costoEnvio),
         total: Number(totalFinal),
@@ -224,6 +232,13 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       console.error("Error completo:", err);
       toast.error("Error al procesar el pedido");
     }
+  };
+
+  const reiniciarCarrito = () => {
+    setCarrito([]);
+    localStorage.removeItem("carrito");
+    setAlertaCheckout("");
+    toast.success("Carrito reiniciado");
   };
 
   const cantidadTotal = carrito.reduce((acc, p) => acc + p.cantidad, 0);
