@@ -77,7 +77,7 @@ export const agregarPedido = async (pedido) => {
   const { data, error } = await supabase
     .from("pedidos")
     .insert([pedido])
-    .select()
+    .select();
   if (error) {
     console.error("Error al agregar pedido:", error);
     return null;
