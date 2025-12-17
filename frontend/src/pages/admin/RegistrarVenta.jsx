@@ -24,7 +24,23 @@ import {
 export default function RegistrarVenta() {
     const [productos, setProductos] = useState([]);
     const [categorias, setCategorias] = useState([]);
-    const [carrito, setCarrito] = useState([]);
+    const [carrito, setCarrito] = useState(() => {
+        if (typeof window !== "undefined") {
+            try {
+                const saved = localStorage.getItem("carrito_admin");
+                return saved ? JSON.parse(saved) : [];
+            } catch (e) {
+                console.error("Error cargando carrito admin", e);
+                return [];
+            }
+        }
+        return [];
+    });
+
+    // Guardar carrito en localStorage cuando cambie
+    useEffect(() => {
+        localStorage.setItem("carrito_admin", JSON.stringify(carrito));
+    }, [carrito]);
     const [busqueda, setBusqueda] = useState("");
     const [filtroCategoria, setFiltroCategoria] = useState("");
     const [loading, setLoading] = useState(true);
@@ -343,13 +359,14 @@ export default function RegistrarVenta() {
                                     const pocoStock = producto.stock > 0 && producto.stock <= 5;
 
                                     return (
-                                        <button
+                                        <div
                                             key={producto.id}
-                                            onClick={() => agregarProducto(producto)}
-                                            disabled={sinStock}
+                                            onClick={() => {
+                                                if (!sinStock) agregarProducto(producto);
+                                            }}
                                             className={`
                                                 relative bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-indigo-300 transition-all duration-200 
-                                                flex flex-col text-left group overflow-hidden
+                                                flex flex-col text-left group overflow-hidden cursor-pointer
                                                 ${sinStock ? "opacity-60 cursor-not-allowed grayscale" : "active:scale-[0.98]"}
                                             `}
                                         >
@@ -396,14 +413,28 @@ export default function RegistrarVenta() {
                                                     <span className="text-base md:text-lg font-bold text-slate-900">
                                                         ${parseInt(producto.precio).toLocaleString("es-CO")}
                                                     </span>
-                                                    {!sinStock && (
-                                                        <div className="w-8 h-8 rounded-full bg-slate-50 text-indigo-600 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
-                                                            <IoAdd size={20} />
-                                                        </div>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-xs font-semibold ${pocoStock ? "text-orange-600" : "text-slate-500"}`}>
+                                                            {producto.stock} und.
+                                                        </span>
+                                                        {!sinStock && (
+                                                            (() => {
+                                                                const enCarrito = carrito.find(item => item.id === producto.id);
+                                                                return enCarrito ? (
+                                                                    <div className="w-10 h-10 lg:w-8 lg:h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md text-lg lg:text-sm animate-in zoom-in-50 duration-200">
+                                                                        {enCarrito.cantidad}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-10 h-10 lg:w-8 lg:h-8 rounded-full bg-slate-50 text-indigo-600 flex items-center justify-center shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                                                        <IoAdd size={24} className="lg:w-5 lg:h-5" />
+                                                                    </div>
+                                                                );
+                                                            })()
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </button>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -412,7 +443,7 @@ export default function RegistrarVenta() {
                 </main>
 
                 {/* BARRA INFERIOR FLOTANTE (SOLO MOBILE) */}
-                <div className="lg:hidden absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-20 flex items-center gap-3">
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-40 flex items-center gap-3">
                     <div className="flex-1">
                         <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Total</p>
                         <p className="text-2xl font-black text-slate-900 leading-none">
@@ -434,12 +465,12 @@ export default function RegistrarVenta() {
                         <span>Ver Carrito</span>
                     </button>
                 </div>
-            </div>
+            </div >
 
             {/* ==============================================
                 SECCIÓN DERECHA: CARRITO Y CHECKOUT 
                ============================================== */}
-            <div className={`
+            < div className={`
                 fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm lg:static lg:bg-white lg:z-auto lg:w-[420px] lg:border-l lg:border-slate-200 transition-all duration-300
                 ${mostrarCarrito ? "opacity-100 visible" : "opacity-0 invisible lg:opacity-100 lg:visible"}
             `}>
@@ -682,100 +713,104 @@ export default function RegistrarVenta() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* MODAL CONFIRMACIÓN (REUTILIZADO CON ESTILO MEJORADO) */}
-            {modalConfirmacion && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 text-center">
-                            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                                <IoCheckmarkCircle size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 mb-2">¿Todo listo?</h3>
-                            <p className="text-slate-500 mb-6 text-sm">
-                                Se registrará una venta por <strong className="text-slate-800 text-base">${totalFinal.toLocaleString("es-CO")}</strong>
-                                <br />
-                                {tipoEntrega === "domicilio" ? " con entrega a domicilio." : " con entrega inmediata."}
-                            </p>
+            {
+                modalConfirmacion && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-6 text-center">
+                                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                                    <IoCheckmarkCircle size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">¿Todo listo?</h3>
+                                <p className="text-slate-500 mb-6 text-sm">
+                                    Se registrará una venta por <strong className="text-slate-800 text-base">${totalFinal.toLocaleString("es-CO")}</strong>
+                                    <br />
+                                    {tipoEntrega === "domicilio" ? " con entrega a domicilio." : " con entrega inmediata."}
+                                </p>
 
-                            <div className="grid grid-cols-2 gap-3">
-                                <button
-                                    onClick={() => setModalConfirmacion(false)}
-                                    className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
-                                >
-                                    Volver
-                                </button>
-                                <button
-                                    onClick={procesarVenta}
-                                    className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30"
-                                >
-                                    ¡Sí, Confirmar!
-                                </button>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        onClick={() => setModalConfirmacion(false)}
+                                        className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                                    >
+                                        Volver
+                                    </button>
+                                    <button
+                                        onClick={procesarVenta}
+                                        className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30"
+                                    >
+                                        ¡Sí, Confirmar!
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* MODAL CONFIGURACIÓN (MANTENIDO IGUAL PERO CON Z-INDEX AJUSTADO) */}
-            {configOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                <IoSettingsOutline className="text-indigo-600" />
-                                Configuración Domicilio
-                            </h3>
-                            <button onClick={() => setConfigOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <IoClose size={24} />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1">Costo de Envío Base</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                                    <input
-                                        type="number"
-                                        value={costoEnvioConfig}
-                                        onChange={(e) => setCostoEnvioConfig(e.target.value)}
-                                        className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1">Envío Gratis Desde</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                                    <input
-                                        type="number"
-                                        value={minimoGratisConfig}
-                                        onChange={(e) => setMinimoGratisConfig(e.target.value)}
-                                        className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
-                                    />
-                                </div>
-                                <p className="text-xs text-slate-500 mt-1.5">Monto mínimo para que el envío sea automático $0.</p>
-                            </div>
-                            <div className="pt-2 flex gap-3">
-                                <button
-                                    onClick={() => setConfigOpen(false)}
-                                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
-                                >
-                                    Cancelar
+            {
+                configOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                    <IoSettingsOutline className="text-indigo-600" />
+                                    Configuración Domicilio
+                                </h3>
+                                <button onClick={() => setConfigOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <IoClose size={24} />
                                 </button>
-                                <button
-                                    onClick={guardarConfig}
-                                    disabled={loadingConfig}
-                                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
-                                >
-                                    {loadingConfig ? "Guardando..." : "Guardar"}
-                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Costo de Envío Base</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={costoEnvioConfig}
+                                            onChange={(e) => setCostoEnvioConfig(e.target.value)}
+                                            className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Envío Gratis Desde</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                                        <input
+                                            type="number"
+                                            value={minimoGratisConfig}
+                                            onChange={(e) => setMinimoGratisConfig(e.target.value)}
+                                            className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
+                                        />
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1.5">Monto mínimo para que el envío sea automático $0.</p>
+                                </div>
+                                <div className="pt-2 flex gap-3">
+                                    <button
+                                        onClick={() => setConfigOpen(false)}
+                                        className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={guardarConfig}
+                                        disabled={loadingConfig}
+                                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                                    >
+                                        {loadingConfig ? "Guardando..." : "Guardar"}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

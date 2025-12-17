@@ -37,7 +37,18 @@ export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
   const busqueda = searchParams.get("q") || "";
   const categoriaUrl = searchParams.get("categoria") || "";
-  const [carrito, setCarrito] = useState([]);
+  const [carrito, setCarrito] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("carrito");
+        return saved ? JSON.parse(saved) : [];
+      } catch (error) {
+        console.error("Error al cargar carrito:", error);
+        return [];
+      }
+    }
+    return [];
+  });
   const [cargando, setCargando] = useState(true);
 
   // Estados para paginación infinita
@@ -79,12 +90,6 @@ export default function Catalogo() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
-
-  // Cargar carrito desde localStorage al iniciar
-  useEffect(() => {
-    const carritoGuardado = localStorage.getItem("carrito");
-    if (carritoGuardado) setCarrito(JSON.parse(carritoGuardado));
   }, []);
 
   // Guardar carrito en localStorage cada vez que cambie

@@ -206,21 +206,14 @@ export default function Productos() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-xl md:text-3xl font-bold text-slate-900">Inventario</h1>
+              <h1 className="text-xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">
+                Inventario
+                <span className="text-slate-400 text-lg font-normal">({stats.total})</span>
+              </h1>
               <p className="hidden md:block text-slate-500 mt-1">Gestiona tu catálogo de productos</p>
             </div>
 
-            {/* Stats Compactos Movil */}
-            <div className="grid grid-cols-2 gap-3 w-full md:w-auto">
-              <div className="px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-100 flex items-center justify-between md:flex-col md:justify-center md:min-w-[100px]">
-                <span className="text-xs md:text-sm text-indigo-600 font-medium">Total</span>
-                <span className="text-lg md:text-2xl font-bold text-indigo-700 leading-none">{stats.total}</span>
-              </div>
-              <div className="px-3 py-2 bg-orange-50 rounded-lg border border-orange-100 flex items-center justify-between md:flex-col md:justify-center md:min-w-[100px]">
-                <span className="text-xs md:text-sm text-orange-600 font-medium">Bajo Stock</span>
-                <span className="text-lg md:text-2xl font-bold text-orange-700 leading-none">{stats.lowStock}</span>
-              </div>
-            </div>
+            {/* Stats Removed as requested */}
           </div>
 
           {/* TOOLBAR */}
@@ -329,8 +322,8 @@ export default function Productos() {
                       </div>
                     )}
 
-                    {/* Botones de acción on hover */}
-                    <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 justify-center bg-gradient-to-t from-black/50 to-transparent pt-8">
+                    {/* Botones de acción on hover (Desktop) */}
+                    <div className="hidden md:flex absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity gap-2 justify-center bg-gradient-to-t from-black/50 to-transparent pt-8">
                       <button
                         onClick={() => abrirEditar(p)}
                         className="p-2 bg-white text-slate-700 rounded-full hover:bg-indigo-500 hover:text-white shadow-lg transition-colors"
@@ -349,21 +342,37 @@ export default function Productos() {
                   </div>
 
                   {/* Info */}
-                  <div className="p-3 flex flex-col flex-1">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">
+                  <div className="p-2 flex flex-col flex-1">
+                    <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">
                       {catMap[p.categoria_id] || "Sin Categoría"}
                     </span>
-                    <h3 className="font-semibold text-slate-800 text-sm leading-tight line-clamp-2 mb-2" title={p.nombre}>
+                    <h3 className="font-semibold text-slate-800 text-xs leading-tight line-clamp-2 mb-1.5" title={p.nombre}>
                       {p.nombre}
                     </h3>
 
-                    <div className="mt-auto flex items-end justify-between border-t border-slate-50 pt-2">
-                      <span className="text-lg font-bold text-slate-900">
+                    <div className="mt-auto flex items-end justify-between border-t border-slate-50 pt-1.5">
+                      <span className="text-base font-bold text-slate-900">
                         ${p.precio.toLocaleString()}
                       </span>
-                      <span className={`text-xs font-medium ${sinStock ? 'text-rose-500' : 'text-slate-500'}`}>
+                      <span className={`text-[10px] font-medium ${sinStock ? 'text-rose-500' : 'text-slate-500'}`}>
                         Stock: {p.stock}
                       </span>
+                    </div>
+
+                    {/* Botones Mobile (Siempre visibles) */}
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex gap-1.5 md:hidden">
+                      <button
+                        onClick={() => abrirEditar(p)}
+                        className="flex-1 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1 active:bg-indigo-100"
+                      >
+                        <IoPencil size={12} /> Editar
+                      </button>
+                      <button
+                        onClick={() => setProductoAEliminar(p.id)}
+                        className="flex-1 py-1 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-lg flex items-center justify-center gap-1 active:bg-rose-100"
+                      >
+                        <IoTrashBin size={12} /> Eliminar
+                      </button>
                     </div>
                   </div>
                 </div>
