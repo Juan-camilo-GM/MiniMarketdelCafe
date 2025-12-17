@@ -101,12 +101,14 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       const pedido = {
         cliente_nombre: cliente.nombre.trim(),
         cliente_direccion: entrega === "domicilio" ? cliente.direccion.trim() : null,
-        productos: carrito.map(p => ({
-          id: p.id,
-          nombre: p.nombre,
-          cantidad: p.cantidad,
-          precio: p.precio
-        })),
+        productos: carrito
+          .map(p => ({
+            id: p?.id ?? null,
+            nombre: p?.nombre ?? "",
+            cantidad: Number(p?.cantidad ?? 0) || 0,
+            precio: Number(p?.precio ?? 0) || 0,
+          }))
+          .filter(p => p.id !== null && p.nombre !== "" && p.cantidad > 0),
         subtotal: Number(total),
         costo_envio: Number(costoEnvio),
         total: Number(totalFinal),

@@ -41,7 +41,20 @@ export default function Catalogo() {
     if (typeof window !== "undefined") {
       try {
         const saved = localStorage.getItem("carrito");
-        return saved ? JSON.parse(saved) : [];
+        if (!saved) return [];
+        const parsed = JSON.parse(saved);
+        if (!Array.isArray(parsed)) return [];
+        // Normalizar y validar items para evitar datos corruptos en localStorage
+        return parsed
+          .map((p) => ({
+            id: p?.id ?? null,
+            nombre: p?.nombre ?? p?.title ?? "",
+            precio: Number(p?.precio ?? p?.price ?? 0) || 0,
+            cantidad: Number(p?.cantidad ?? p?.qty ?? 1) || 1,
+            imagen_url: p?.imagen_url ?? p?.image_url ?? null,
+            stock: Number(p?.stock ?? 0) || 0,
+          }))
+          .filter((p) => p.id !== null && p.nombre !== "");
       } catch (error) {
         console.error("Error al cargar carrito:", error);
         return [];
