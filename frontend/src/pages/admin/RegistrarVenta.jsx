@@ -502,21 +502,21 @@ export default function RegistrarVenta() {
                 SECCIÓN DERECHA: CARRITO Y CHECKOUT 
                ============================================== */}
             < div className={`
-                fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm lg:static lg:bg-white lg:z-auto lg:w-[420px] lg:border-l lg:border-slate-200 transition-all duration-300
+                fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm lg:static lg:bg-white lg:z-auto lg:w-[520px] lg:border-l lg:border-slate-200 transition-all duration-300
                 ${mostrarCarrito ? "opacity-100 visible" : "opacity-0 invisible lg:opacity-100 lg:visible"}
             `}>
                 <div className={`
-                    absolute inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl lg:shadow-none flex flex-col h-full transform transition-transform duration-300 ease-out
+                    absolute inset-y-0 right-0 w-full max-w-[560px] bg-white shadow-2xl lg:shadow-none flex flex-col h-full transform transition-transform duration-300 ease-out
                     ${mostrarCarrito ? "translate-x-0" : "translate-x-full lg:translate-x-0"}
                 `}>
 
                     {/* Header Carrito */}
-                    <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                         <div className="flex items-center gap-3">
                             <div className="bg-indigo-50 p-2 rounded-lg text-indigo-600">
                                 <IoCartOutline size={20} />
                             </div>
-                            <h2 className="text-lg font-bold text-slate-800">
+                            <h2 className="text-2xl font-bold text-slate-800">
                                 Resumen del Pedido
                             </h2>
                             <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -532,7 +532,7 @@ export default function RegistrarVenta() {
                     </div>
 
                     {/* Lista de Items Scrollable */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
                         {carrito.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-60">
                                 <div className="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-400">
@@ -543,9 +543,9 @@ export default function RegistrarVenta() {
                             </div>
                         ) : (
                             carrito.map(item => (
-                                <div key={item.id} className="group bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex gap-3 hover:border-indigo-200 transition-colors">
+                                <div key={item.id} className="group bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex gap-4 hover:border-indigo-200 transition-colors">
                                     {/* Imagen Item */}
-                                    <div className="w-16 h-16 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                                    <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-100">
                                         {item.imagen_url ? (
                                             <img src={item.imagen_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
@@ -609,7 +609,7 @@ export default function RegistrarVenta() {
                     {/* Formulario y Checkout (Sticky Bottom en Panel) */}
                     <div className="bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] shrink-0 z-10">
                         {/* Selector Entrega & Cliente en Accordion o Compacto */}
-                        <div className="p-5 pb-0 space-y-4">
+                        <div className="p-6 pb-0 space-y-4">
 
                             {/* Tabs Tipo Entrega */}
                             <div className="flex p-1 bg-slate-100 rounded-xl">
@@ -692,7 +692,7 @@ export default function RegistrarVenta() {
                         </div>
 
                         {/* Totales y Botón Acción */}
-                        <div className="p-5 bg-slate-50/50 mt-4 space-y-3">
+                        <div className="p-6 bg-slate-50/50 mt-4 space-y-4">
                             <div className="space-y-1 text-sm">
                                 <div className="flex justify-between text-slate-500">
                                     <span>Subtotal</span>
@@ -714,9 +714,9 @@ export default function RegistrarVenta() {
                                 )}
                             </div>
 
-                            <div className="flex justify-between items-end pt-2 border-t border-slate-200">
+                            <div className="flex justify-between items-end pt-3 border-t border-slate-200">
                                 <span className="text-slate-600 font-medium pb-1">Total a Pagar</span>
-                                <span className="text-3xl font-black text-slate-900 leading-none">
+                                <span className="text-4xl font-black text-slate-900 leading-none">
                                     ${totalFinal.toLocaleString("es-CO")}
                                 </span>
                             </div>
