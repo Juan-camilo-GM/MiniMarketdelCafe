@@ -76,12 +76,16 @@ export async function eliminarProducto(id) {
 export const agregarPedido = async (pedido) => {
   const { data, error } = await supabase
     .from("pedidos")
-    .insert([pedido]);
+    .insert([pedido])
+    .select()
+    .single();
+
   if (error) {
     console.error("Error al agregar pedido:", error);
     return null;
   }
-  return data; // devolver el resultado para indicar éxito y permitir uso posterior
+
+  return data; // devolver la fila insertada
 };
 
 
