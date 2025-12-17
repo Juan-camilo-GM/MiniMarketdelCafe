@@ -22,13 +22,28 @@ import {
 } from "react-icons/io5";
 
 export default function RegistrarVenta() {
+    // Normaliza y valida objetos del carrito guardados en localStorage
+    const sanitizeCarritoItems = (items) => {
+        if (!Array.isArray(items)) return [];
+        return items.map(it => {
+            const id = Number(it?.id) || null;
+            const cantidad = Number(it?.cantidad) || 0;
+            const precio = Number(it?.precio) || 0;
+            const nombre = it?.nombre || "Producto";
+            const imagen_url = it?.imagen_url || null;
+            const stock = Number(it?.stock) || 0;
+            return { id, cantidad, precio, nombre, imagen_url, stock };
+        }).filter(i => i.id && i.cantidad > 0 && !isNaN(i.precio));
+    };
+
     const [productos, setProductos] = useState([]);
     const [categorias, setCategorias] = useState([]);
     const [carrito, setCarrito] = useState(() => {
         if (typeof window !== "undefined") {
             try {
                 const saved = localStorage.getItem("carrito_admin");
-                return saved ? JSON.parse(saved) : [];
+                const parsed = saved ? JSON.parse(saved) : [];
+                return sanitizeCarritoItems(parsed);
             } catch (e) {
                 console.error("Error cargando carrito admin", e);
                 return [];
@@ -112,6 +127,16 @@ export default function RegistrarVenta() {
         setLoadingConfig(false);
     };
 
+    const reiniciarCarritoAdmin = () => {
+        setCarrito([]);
+        try {
+            localStorage.removeItem("carrito_admin");
+        } catch (e) {
+            console.error("Error limpiando localStorage carrito_admin", e);
+        }
+        toast.success("Carrito reiniciado");
+    };
+
     const productosFiltrados = useMemo(() => {
         return productos.filter(p => {
             const matchTexto = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
@@ -193,8 +218,14 @@ export default function RegistrarVenta() {
     const procesarVenta = async () => {
         setProcesando(true);
         try {
+            // 0. Sanitizar carrito antes de procesar
+            const sanitizedCarrito = sanitizeCarritoItems(carrito);
+            if (!sanitizedCarrito || sanitizedCarrito.length === 0) {
+                throw new Error("Carrito vacío o corrupto. Reinícialo antes de continuar.");
+            }
+
             // 1. Verificar stock nuevamente
-            for (const item of carrito) {
+            for (const item of sanitizedCarrito) {
                 const { data: prodActual } = await supabase
                     .from("productos")
                     .select("stock")
@@ -217,7 +248,7 @@ export default function RegistrarVenta() {
                 tipo_entrega: tipoEntrega,
                 metodo_pago: metodoPago,
                 cambio: (metodoPago === "efectivo" && pagaCon) ? Number(pagaCon) - totalFinal : null,
-                productos: carrito.map(p => ({
+                productos: sanitizedCarrito.map(p => ({
                     id: p.id,
                     nombre: p.nombre,
                     precio: p.precio,
@@ -233,7 +264,7 @@ export default function RegistrarVenta() {
             if (errorPedido) throw errorPedido;
 
             // 3. Actualizar stock
-            for (const item of carrito) {
+            for (const item of sanitizedCarrito) {
                 const { data: prod } = await supabase
                     .from("productos")
                     .select("stock")
