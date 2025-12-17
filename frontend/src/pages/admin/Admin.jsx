@@ -26,15 +26,20 @@ import { supabase } from "../../lib/supabase";
 
 // Helper para borrar imágenes antiguas
 const deleteOldImage = async (url) => {
-  if (!url) return;
+  if (!url) return false;
   try {
     const match = url.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)$/);
-    if (!match) return;
+    if (!match) return false;
     const path = match[1];
     const { error } = await supabase.storage.from("productos").remove([path]);
-    if (error) console.error("Error borrando imagen:", error);
+    if (error) {
+      console.error("Error borrando imagen:", error);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error("Excepción borrando imagen:", err);
+    return false;
   }
 };
 
@@ -65,6 +70,32 @@ export default function Productos() {
     is_featured: false
   });
   const [imagenFile, setImagenFile] = useState(null);
+
+  // Elimina la imagen inmediatamente (local o del bucket)
+  const removeImageNow = async () => {
+    try {
+      if (imagenFile) {
+        setImagenFile(null);
+        setFormProducto(p => ({ ...p, imagen_url: null }));
+        toast.success("Imagen removida");
+        return;
+      }
+
+      if (formProducto.imagen_url) {
+        const url = formProducto.imagen_url;
+        const ok = await deleteOldImage(url);
+        if (ok) {
+          setFormProducto(p => ({ ...p, imagen_url: null }));
+          toast.success("Imagen eliminada del bucket");
+        } else {
+          toast.error("No se pudo eliminar la imagen del bucket");
+        }
+      }
+    } catch (err) {
+      console.error("Error eliminando imagen", err);
+      toast.error("Error eliminando la imagen");
+    }
+  };
 
   // === CARGA DE DATOS ===
   useEffect(() => {
@@ -482,7 +513,7 @@ export default function Productos() {
                           className="w-full h-full object-contain rounded-lg"
                         />
                         <button
-                          onClick={() => { setImagenFile(null); setFormProducto(p => ({ ...p, imagen_url: null })) }}
+                          onClick={removeImageNow}
                           className="absolute top-2 right-2 z-20 bg-white text-rose-500 p-2 rounded-full shadow-md hover:bg-rose-50 transition"
                         >
                           <IoTrashBin />
