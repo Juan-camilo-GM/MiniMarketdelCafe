@@ -234,41 +234,24 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       );
 
       // Intentar abrir en ventana nueva; si popup bloqueado o en móvil, hacer fallback a location.href
+      const whatsappUrl = `https://wa.me/${TU_NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
       const openWhatsapp = () => {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      
-      if (isIOS || isSafari) {
-        // Para iOS/Safari: Abrir en la misma ventana
-        window.location.href = whatsappUrl;
-        
-        // Intentar abrir WhatsApp nativo (si está instalado)
-        setTimeout(() => {
-          // Si WhatsApp no está instalado, Safari mantendrá la página web de WhatsApp
-          // Podemos intentar volver después de un tiempo
-          try {
-            if (document.hidden || document.webkitHidden) {
-              // La app se abrió, no hacemos nada
-            } else {
-              // WhatsApp no se abrió, podríamos mostrar un mensaje
-              // window.history.back(); // Solo si quieres volver automáticamente
-            }
-          } catch (e) {
-            // Ignorar errores
-          }
-        }, 500);
-      } else {
-        // Para Android y otros navegadores: Abrir en nueva pestaña
-        const a = document.createElement('a');
-        a.href = whatsappUrl;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-    };
+        try {
+          // Crear un anchor temporal para abrir en nueva pestaña sin afectar la actual
+          const a = document.createElement('a');
+          a.href = whatsappUrl;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          // Algunos navegadores requieren que el anchor esté en el DOM
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch (err) {
+          // Fallback a navegación en la misma pestaña
+          window.location.href = whatsappUrl;
+        }
+      };
 
       // Abrir tras breve delay para dejar mostrar el toast
       setTimeout(openWhatsapp, 500);
