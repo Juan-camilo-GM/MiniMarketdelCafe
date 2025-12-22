@@ -298,15 +298,15 @@ export default function Catalogo() {
         )}
 
         {cargando ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {[...Array(12)].map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
+            {[...Array(14)].map((_, i) => (
               <ProductoSkeleton key={i} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col gap-8">
             {productosVisibles.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
                 {productosVisibles.map((producto) => {
                   const enCarrito = carrito.find((item) => item.id === producto.id);
                   const cantidad = enCarrito ? enCarrito.cantidad : 0;
@@ -319,7 +319,7 @@ export default function Catalogo() {
                       className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-400 flex flex-col h-full
                         ${estaAgotado
                           ? "opacity-65 grayscale"
-                          : "shadow-xl hover:shadow-2xl hover:-translate-y-2 ring-1 ring-gray-100"
+                          : "shadow-md hover:shadow-xl hover:-translate-y-1 ring-1 ring-gray-100"
                         }`}
                     >
                       {/* Imagen */}
@@ -338,8 +338,8 @@ export default function Catalogo() {
                         )}
 
                         {/* Badge categoría */}
-                        <span className={`absolute top-3 left-3 px-3.5 py-1.5 rounded-full text-white text-xs font-bold shadow-lg z-10
-                                max-w-[100px] sm:max-w-[120px] md:max-w-[150px] lg:max-w-none truncate
+                        <span className={`absolute top-2 left-2 px-2.5 py-1 rounded-full text-white text-[10px] sm:text-xs font-bold shadow-md z-10
+                                max-w-[90px] sm:max-w-[110px] truncate
                           ${producto.categoria_id === 1 ? "bg-orange-500" :
                             producto.categoria_id === 2 ? "bg-emerald-600" :
                               producto.categoria_id === 3 ? "bg-sky-600" :
@@ -366,12 +366,12 @@ export default function Catalogo() {
                       </div>
 
                       {/* Texto y precio */}
-                      <div className="p-3 pb-2 sm:p-5 sm:pb-3 flex flex-col flex-1">
-                        <h3 className="font-bold text-gray-900 text-sm sm:text-lg leading-snug sm:leading-tight line-clamp-3 min-h-[3.5rem] sm:min-h-0">
+                      <div className="p-3 pb-2 flex flex-col flex-1">
+                        <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-snug line-clamp-2 min-h-[2.5rem]">
                           {producto.nombre}
                         </h3>
-                        <div className="mt-auto pt-2 sm:pt-3">
-                          <span className="text-xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-700">
+                        <div className="mt-auto pt-2">
+                          <span className="text-lg sm:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-700">
                             ${parseFloat(producto.precio).toLocaleString("es-AR")}
                           </span>
                         </div>
@@ -379,35 +379,35 @@ export default function Catalogo() {
 
                       {/* BOTÓN */}
                       {!estaAgotado ? (
-                        <div className="px-3 pb-3 sm:px-5 sm:pb-5 mt-auto">
+                        <div className="px-3 pb-3 mt-auto">
                           {cantidad === 0 ? (
                             <button
                               onClick={() => agregarAlCarrito(producto)}
-                              className="w-full flex items-center justify-center gap-2 sm:gap-3 cursor-pointer
-                                bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl sm:rounded-2xl
-                                shadow-lg sm:shadow-xl hover:shadow-xl sm:hover:shadow-2xl active:scale-98 transition-all duration-300
-                                py-2.5 text-xs sm:py-3 sm:text-sm md:text-base"
+                              className="w-full flex items-center justify-center gap-2 cursor-pointer
+                                bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-lg sm:rounded-xl
+                                shadow-sm hover:shadow-md active:scale-95 transition-all duration-200
+                                py-2 text-xs sm:text-sm"
                             >
                               <span className="tracking-wide">AGREGAR</span>
                             </button>
                           ) : (
-                            <div className="flex items-center bg-gray-100 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 shadow-inner">
+                            <div className="flex items-center bg-gray-100 rounded-lg sm:rounded-xl p-1 shadow-inner">
                               <button
                                 onClick={() => actualizarCantidad(producto.id, cantidad - 1)}
-                                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-white rounded-lg sm:rounded-xl shadow-sm text-purple-700 hover:bg-purple-50 transition-colors"
+                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded-md sm:rounded-lg shadow-sm text-purple-700 hover:bg-purple-50 transition-colors"
                               >
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 sm:w-4 sm:h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
                                 </svg>
                               </button>
-                              <span className="flex-1 text-center font-black text-gray-800 text-sm sm:text-lg select-none">
+                              <span className="flex-1 text-center font-bold text-gray-800 text-sm select-none">
                                 {cantidad}
                               </span>
                               <button
                                 onClick={() => agregarAlCarrito(producto)}
-                                className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center bg-purple-600 rounded-lg sm:rounded-xl shadow-lg shadow-purple-200 text-white hover:bg-purple-700 transition-transform active:scale-90"
+                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-purple-600 rounded-md sm:rounded-lg shadow-md shadow-purple-200 text-white hover:bg-purple-700 transition-transform active:scale-95"
                               >
-                                <svg className="w-4 h-4 sm:w-5 sm:h-5 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3 h-3 sm:w-4 sm:h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
                                 </svg>
                               </button>
@@ -415,8 +415,8 @@ export default function Catalogo() {
                           )}
                         </div>
                       ) : (
-                        <div className="px-3 pb-3 sm:px-5 sm:pb-5 mt-auto opacity-0 pointer-events-none">
-                          <div className="h-10 sm:h-12" />
+                        <div className="px-3 pb-3 mt-auto opacity-0 pointer-events-none">
+                          <div className="h-9 sm:h-10" />
                         </div>
                       )}
                     </article>
@@ -444,7 +444,8 @@ export default function Catalogo() {
                   Ver todo el menú
                 </button>
               </div>
-            )}
+            )
+            }
 
             {/* Spinner Infinite Scroll */}
             {hayMasProductos && !cargandoMas && !cargando && (
