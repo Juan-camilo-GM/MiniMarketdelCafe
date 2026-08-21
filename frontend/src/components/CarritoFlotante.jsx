@@ -24,7 +24,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const NEQUI_NUMERO = "3154186754";
   const DAVIPLATA_NUMERO = "3154186754";
   const NOMBRE_TITULAR = "Johana González";
-  const TU_NUMERO_WHATSAPP = "573218937440";
+  const TU_NUMERO_WHATSAPP = "573117863431";
 
   useEffect(() => {
     localStorage.setItem("carrito", JSON.stringify(carrito));
