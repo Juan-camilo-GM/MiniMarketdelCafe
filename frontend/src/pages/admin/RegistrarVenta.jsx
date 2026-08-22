@@ -11,11 +11,8 @@ import {
     IoRemove,
     IoTrashBin,
     IoCheckmarkCircle,
-    IoCashOutline,
-    IoPersonOutline,
     IoGrid,
     IoLocationOutline,
-    IoWalletOutline,
     IoClose,
     IoSettingsOutline,
     IoSaveOutline
@@ -125,13 +122,11 @@ export default function RegistrarVenta() {
         });
 
         return () => {
-            try { unsubCosto(); } catch (e) { }
-            try { unsubMin(); } catch (e) { }
-            try { unsubReducido(); } catch (e) { }
+            if (typeof unsubCosto === "function") unsubCosto();
+            if (typeof unsubMin === "function") unsubMin();
+            if (typeof unsubReducido === "function") unsubReducido();
         };
     }, []);
-
-
 
     const guardarConfig = async () => {
         setLoadingConfig(true);
@@ -148,16 +143,6 @@ export default function RegistrarVenta() {
             toast.error("Error al actualizar algunos valores");
         }
         setLoadingConfig(false);
-    };
-
-    const reiniciarCarritoAdmin = () => {
-        setCarrito([]);
-        try {
-            localStorage.removeItem("carrito_admin");
-        } catch (e) {
-            console.error("Error limpiando localStorage carrito_admin", e);
-        }
-        toast.success("Carrito reiniciado");
     };
 
     const productosFiltrados = useMemo(() => {

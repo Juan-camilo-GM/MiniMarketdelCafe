@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { format, subDays, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import {
-  IoCartOutline,
   IoStorefrontOutline,
   IoDownloadOutline,
   IoTrashBin,
@@ -11,7 +10,6 @@ import {
   IoMenu,
   IoClose
 } from "react-icons/io5";
-import toast from "react-hot-toast";
 
 // Hooks
 import { useDashboardData } from "../../hooks/useDashboardData";

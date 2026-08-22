@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 
-export const useDashboardData = (tabActivo) => {
+export const useDashboardData = () => {
     const [pedidos, setPedidos] = useState([]);
     const [productosStockBajo, setProductosStockBajo] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -43,6 +43,6 @@ export const useDashboardData = (tabActivo) => {
         loadingStock,
         fetchPedidos,
         fetchProductosStockBajo,
-        setPedidos // Exported to allow optimistic updates or manual setting if needed
+        setPedidos
     };
 };

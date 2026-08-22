@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { IoCart, IoTrashBin, IoClose, IoCash, IoCloudUpload } from "react-icons/io5";
+import { IoCart, IoTrashBin, IoClose } from "react-icons/io5";
 import { agregarPedido } from "../lib/productos";
 import { obtenerConfiguracion, subscribeConfiguracion } from "../lib/config";
 import toast from "react-hot-toast";
@@ -98,7 +98,6 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const cerrarCheckout = () => {
     setAlertaCheckout("");
     setCheckoutOpen(false);
-    setComprobante(null);
   };
 
   const eliminarProducto = (id) => {
@@ -166,16 +165,6 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
 
       const guardado = await agregarPedido(pedido);
       if (!guardado) throw new Error("Error al guardar");
-
-      let metodoPagoTexto = "";
-      if (pago === "efectivo") {
-        metodoPagoTexto = "Efectivo (pago al recibir)";
-        if (cambio) metodoPagoTexto += `\nPago con: $${Number(cambio).toLocaleString("es-CO")} (cambio)`;
-      } else if (pago === "nequi") {
-        metodoPagoTexto = `Nequi al ${NEQUI_NUMERO} (${NOMBRE_TITULAR})`;
-      } else if (pago === "daviplata") {
-        metodoPagoTexto = `Daviplata al ${DAVIPLATA_NUMERO} (${NOMBRE_TITULAR})`;
-      }
 
       const mensaje = `¡HOLA! Quiero hacer un pedido en *MiniMarket del Café*
 
@@ -256,13 +245,6 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       console.error("Error completo:", err);
       toast.error("Error al procesar el pedido");
     }
-  };
-
-  const reiniciarCarrito = () => {
-    setCarrito([]);
-    localStorage.removeItem("carrito");
-    setAlertaCheckout("");
-    toast.success("Carrito reiniciado");
   };
 
   const cantidadTotal = carrito.reduce((acc, p) => acc + p.cantidad, 0);

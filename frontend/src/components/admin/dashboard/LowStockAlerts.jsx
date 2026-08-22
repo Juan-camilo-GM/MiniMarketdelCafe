@@ -53,7 +53,7 @@ export default function LowStockAlerts({ productos, loading }) {
                                         {producto.nombre}
                                     </p>
                                     <p className="text-xs text-slate-500">
-                                        {isAgotado ? "Agotado" : "Quedan pocos"}
+                                        {isAgotado ? "Agotado" : isCritico ? "Stock crítico" : "Quedan pocos"}
                                     </p>
                                 </div>
                             </div>

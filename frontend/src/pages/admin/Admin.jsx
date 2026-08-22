@@ -7,7 +7,6 @@ import {
   IoSearch,
   IoFilter,
   IoCubeOutline,
-  IoWarningOutline,
   IoImageOutline,
   IoPencil,
   IoCloudUploadOutline
@@ -224,6 +223,7 @@ export default function Productos() {
       toast.success("Producto eliminado");
       setProductoAEliminar(null);
     } catch (error) {
+      console.error("Error eliminando producto:", error);
       toast.error("Error al eliminar");
     }
   };

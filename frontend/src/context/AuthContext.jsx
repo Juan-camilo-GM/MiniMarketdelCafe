@@ -1,12 +1,7 @@
 // src/context/AuthContext.jsx
-import { createContext, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-
-const AuthContext = createContext({
-  user: null,
-  isAdmin: false,
-  loading: true,
-});
+import { AuthContext } from "./AuthContextDefinition";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -15,7 +10,6 @@ export function AuthProvider({ children }) {
 
   const checkAdminStatus = async () => {
     try {
-      // 1. Forzamos obtener la sesión REAL (nunca falla)
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session?.user) {
@@ -25,7 +19,6 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // 2. Ya tenemos usuario → verificamos si es admin
       const { data: adminData, error: adminError } = await supabase
         .from("admins")
         .select("id")
@@ -45,22 +38,19 @@ export function AuthProvider({ children }) {
       setIsAdmin(false);
       setUser(null);
     } finally {
-      // ¡¡SIEMPRE!! quitamos el loading (esto es clave)
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    checkAdminStatus(); // primera vez
+    checkAdminStatus();
 
-    // Listener para cambios futuros (login/logout desde otra pestaña, etc.)
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
         setUser(null);
         setIsAdmin(false);
         setLoading(false);
       } else {
-        // Volvemos a verificar solo si hay sesión
         checkAdminStatus();
       }
     });
@@ -74,5 +64,3 @@ export function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);

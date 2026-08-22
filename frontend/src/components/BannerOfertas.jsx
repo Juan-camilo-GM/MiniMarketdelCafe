@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react";
-import { IoArrowForward, IoCart } from "react-icons/io5";
+import { useState, useEffect, useMemo } from "react";
+import { IoCart } from "react-icons/io5";
 
 export default function BannerOfertas({ productos, agregarAlCarrito }) {
-    const [ofertas, setOfertas] = useState([]);
     const [indiceActual, setIndiceActual] = useState(0);
 
-    useEffect(() => {
-        // Filtrar productos destacados
-        const destacados = productos.filter(p => p.is_featured);
-        setOfertas(destacados);
+    const ofertas = useMemo(() => {
+        return (productos || []).filter(p => p.is_featured);
     }, [productos]);
 
     // Auto-slide para el carrusel
@@ -18,12 +15,12 @@ export default function BannerOfertas({ productos, agregarAlCarrito }) {
             setIndiceActual((prev) => (prev + 1) % ofertas.length);
         }, 6000);
         return () => clearInterval(intervalo);
-    }, [ofertas]);
+    }, [ofertas.length]);
 
     // Si no hay ofertas, no mostrar nada
     if (ofertas.length === 0) return null;
 
-    const productoActual = ofertas[indiceActual];
+    const productoActual = ofertas[indiceActual % ofertas.length];
 
     if (!productoActual) return null;
 

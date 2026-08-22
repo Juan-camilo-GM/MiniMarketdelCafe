@@ -12,7 +12,7 @@ export async function subirImagen(file) {
   const filePath = `productos/${Date.now()}-${file.name.replace(/\s/g, "_")}`;
 
   // Subida con upsert (sobrescribe si ya existe)
-  const { data: uploadData, error: uploadError } = await supabase.storage
+  const { error: uploadError } = await supabase.storage
     .from("productos")
     .upload(filePath, file, { upsert: true });
 

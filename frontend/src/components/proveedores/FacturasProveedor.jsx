@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
-import { IoPencil, IoTrashBin, IoEyeOutline, IoClose, IoCameraOutline, IoSearch } from "react-icons/io5";
-import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline } from "react-icons/io5";
+import { IoPencil, IoTrashBin, IoEyeOutline, IoCameraOutline, IoSearch } from "react-icons/io5";
+import { IoAlertCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
 
 import toast from "react-hot-toast";
 import { Modal } from "./Modals";
@@ -83,7 +83,7 @@ const FacturaCard = ({ factura, onEdit, onDelete, onView }) => {
   );
 };
 
-const FacturasProveedor = ({ facturas, proveedores, onRefresh }) => {
+const FacturasProveedor = ({ facturas, onRefresh }) => {
   const [editandoFactura, setEditandoFactura] = useState(null);
   const [facturaAEliminar, setFacturaAEliminar] = useState(null);
   const [facturaParaVer, setFacturaParaVer] = useState(null);

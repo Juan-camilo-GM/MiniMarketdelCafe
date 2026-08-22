@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { format } from "date-fns";
 import {
-  IoPencil, IoTrashBin, IoCheckmarkCircle,
-  IoCloseCircle, IoClose, IoSearch, IoEyeOutline
+  IoTrashBin, IoCheckmarkCircle,
+  IoCloseCircle, IoSearch, IoEyeOutline
 } from "react-icons/io5";
-import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline } from "react-icons/io5";
+import { IoAlertCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { Modal } from "./Modals";
 
-const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
+const PedidosProveedor = ({ pedidos, onRefresh }) => {
   const [viendoPedido, setViendoPedido] = useState(null);
   const [pedidoAEliminar, setPedidoAEliminar] = useState(null);
   const [pedidoACambiarEstado, setPedidoACambiarEstado] = useState(null);
@@ -206,7 +206,6 @@ const PedidosProveedor = ({ pedidos, proveedores, productos, onRefresh }) => {
 
       // 4. Mensaje según transición
       let mensaje = `Pedido marcado como ${nuevoEstado.toUpperCase()}`;
-      let icono = <IoCheckmarkCircleOutline size={22} />;
 
       if (nuevoEstado === "confirmado" && estadoAnterior !== "confirmado") {
         mensaje = "Pedido CONFIRMADO ✓ Stock actualizado";

@@ -1,12 +1,11 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
-import { createPortal } from "react-dom";
 import { obtenerProductos } from "../../lib/productos";
 import { obtenerCategorias } from "../../lib/categorias";
 import CarritoFlotante from "../../components/CarritoFlotante";
 import toast from "react-hot-toast";
-import { IoCheckmarkCircleOutline, IoAlertCircleOutline, IoSearch, IoGrid, IoClose } from "react-icons/io5";
+import { IoAlertCircleOutline, IoSearch } from "react-icons/io5";
 
 import BannerOfertas from "../../components/BannerOfertas";
 
@@ -32,7 +31,7 @@ function ProductoSkeleton() {
 
 export default function Catalogo() {
   const [productos, setProductos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
+  const [_categorias, setCategorias] = useState([]);
   const [catMap, setCatMap] = useState({});
   const [searchParams, setSearchParams] = useSearchParams();
   const busqueda = searchParams.get("q") || "";
@@ -133,6 +132,7 @@ export default function Catalogo() {
 
   // Intersection Observer para cargar más productos automáticamente
   useEffect(() => {
+    const targetEl = observerTarget.current;
     const observer = new IntersectionObserver(
       entries => {
         if (entries[0].isIntersecting && hayMasProductos && !cargandoMas && !cargando) {
@@ -146,13 +146,13 @@ export default function Catalogo() {
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    if (targetEl) {
+      observer.observe(targetEl);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (targetEl) {
+        observer.unobserve(targetEl);
       }
     };
   }, [hayMasProductos, cargandoMas, cargando]);

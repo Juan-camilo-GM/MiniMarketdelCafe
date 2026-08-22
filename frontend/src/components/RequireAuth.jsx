@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import SessionLoader from "./SessionLoader";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";
 
 function RequireAuth({ children }) {
   const { loading, isAdmin } = useAuth();

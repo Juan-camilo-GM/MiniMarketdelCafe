@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { IoMenu, IoClose, IoLogOut, IoCart, IoGrid, IoTime, IoSearch, IoChevronDown, IoChevronForward } from "react-icons/io5";
+import { IoMenu, IoClose, IoLogOut, IoCart, IoGrid, IoTime, IoSearch, IoChevronForward } from "react-icons/io5";
 import { obtenerCategorias } from "../lib/categorias";
 import BotonCerrarTienda from "../pages/admin/BotonCerrarTienda";
 
@@ -12,19 +12,19 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const currentCategory = searchParams.get("categoria");
-  const [busqueda, setBusqueda] = useState("");
+  const qInUrl = searchParams.get("q") || "";
+
+  const [prevQ, setPrevQ] = useState(qInUrl);
+  const [busqueda, setBusqueda] = useState(qInUrl);
+
   const [categorias, setCategorias] = useState([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // State for Sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-
-
-  // Sincronizar input con URL (Solo si la URL cambia externamente)
-  useEffect(() => {
-    const q = searchParams.get("q") || "";
-    if (q !== busqueda) {
-      setBusqueda(q);
-    }
-  }, [searchParams]);
+  // Synchronize input when URL parameter changes externally
+  if (prevQ !== qInUrl) {
+    setPrevQ(qInUrl);
+    setBusqueda(qInUrl);
+  }
 
   // Búsqueda en tiempo real (Debounce)
   useEffect(() => {
