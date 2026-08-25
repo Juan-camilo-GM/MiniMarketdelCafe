@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 export default function CarritoFlotante({ carrito, setCarrito }) {
   const [isOpen, setIsOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [confirmarVaciarOpen, setConfirmarVaciarOpen] = useState(false);
   const [alertaStock, setAlertaStock] = useState(null);
   const [alertaCheckout, setAlertaCheckout] = useState("");
 
@@ -127,6 +128,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const vaciarCarrito = () => {
     setCarrito([]);
     localStorage.removeItem("carrito");
+    setConfirmarVaciarOpen(false);
+    toast.success("Carrito vaciado");
   };
 
   const confirmarPedido = async () => {
@@ -330,7 +333,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   <span className="text-indigo-600">${total.toLocaleString("es-CO")}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={vaciarCarrito} className="py-3 rounded-xl bg-gray-200 hover:bg-gray-300 font-medium cursor-pointer">
+                  <button onClick={() => setConfirmarVaciarOpen(true)} className="py-3 rounded-xl bg-gray-200 hover:bg-gray-300 font-medium cursor-pointer">
                     Vaciar
                   </button>
                   <button onClick={abrirCheckout} className="py-3 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold cursor-pointer">
@@ -570,6 +573,38 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                   Enviar por WhatsApp
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN PARA VACIAR EL CARRITO */}
+      {confirmarVaciarOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[75] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <IoTrashBin className="text-3xl" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">¿Vaciar el carrito?</h3>
+            <p className="text-gray-500 mb-6 text-sm">
+              ¿Estás seguro de que quieres vaciar el carrito? Esta acción eliminará todos los productos seleccionados.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmarVaciarOpen(false)}
+                className="py-3 px-4 rounded-xl border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={vaciarCarrito}
+                className="py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg shadow-red-500/30 transition cursor-pointer"
+              >
+                Sí, vaciar
+              </button>
             </div>
           </div>
         </div>
