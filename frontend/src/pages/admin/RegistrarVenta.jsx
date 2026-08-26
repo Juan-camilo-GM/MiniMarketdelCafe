@@ -7,15 +7,27 @@ import toast from "react-hot-toast";
 import {
     IoSearch,
     IoCartOutline,
+    IoCart,
     IoAdd,
     IoRemove,
-    IoTrashBin,
+    IoTrashOutline,
     IoCheckmarkCircle,
     IoGrid,
     IoLocationOutline,
+    IoStorefrontOutline,
     IoClose,
     IoSettingsOutline,
-    IoSaveOutline
+    IoChevronDown,
+    IoChevronUp,
+    IoChevronForward,
+    IoChevronBack,
+    IoExpandOutline,
+    IoContractOutline,
+    IoReceiptOutline,
+    IoCashOutline,
+    IoCardOutline,
+    IoPhonePortraitOutline,
+    IoPersonOutline
 } from "react-icons/io5";
 
 export default function RegistrarVenta() {
@@ -53,6 +65,7 @@ export default function RegistrarVenta() {
     useEffect(() => {
         localStorage.setItem("carrito_admin", JSON.stringify(carrito));
     }, [carrito]);
+
     const [busqueda, setBusqueda] = useState("");
     const [filtroCategoria, setFiltroCategoria] = useState("");
     const [loading, setLoading] = useState(true);
@@ -65,8 +78,13 @@ export default function RegistrarVenta() {
     const [direccion, setDireccion] = useState("");
     const [pagaCon, setPagaCon] = useState("");
 
-    const [mostrarCarrito, setMostrarCarrito] = useState(false);
+    // Estados de interfaz y visualización
+    const [mostrarCarritoMobile, setMostrarCarritoMobile] = useState(false);
+    const [sidebarDesktopAbierto, setSidebarDesktopAbierto] = useState(true);
+    const [modoAnchoDesktop, setModoAnchoDesktop] = useState(false);
+    const [detallesCobroAbierto, setDetallesCobroAbierto] = useState(true);
     const [modalConfirmacion, setModalConfirmacion] = useState(false);
+    const [modalVaciarCarrito, setModalVaciarCarrito] = useState(false);
 
     // Configuración de Envío
     const [costoEnvioConfig, setCostoEnvioConfig] = useState(2000);
@@ -107,7 +125,8 @@ export default function RegistrarVenta() {
             if (valReducido !== null) setCostoEnvioReducidoConfig(Number(valReducido));
         }
         cargarConfig();
-        // Suscribirse a cambios en tiempo real para mantener los valores sincronizados
+
+        // Suscribirse a cambios en tiempo real
         const unsubCosto = subscribeConfiguracion("costo_envio", (v) => {
             const n = Number(v);
             if (!isNaN(n)) setCostoEnvioConfig(n);
@@ -155,7 +174,7 @@ export default function RegistrarVenta() {
 
     const agregarProducto = (producto) => {
         if (producto.stock <= 0) {
-            toast.error("Producto sin stock");
+            toast.error("Producto sin stock disponible");
             return;
         }
 
@@ -195,7 +214,14 @@ export default function RegistrarVenta() {
         setCarrito(prev => prev.filter(item => item.id !== id));
     };
 
+    const vaciarCarrito = () => {
+        setCarrito([]);
+        setModalVaciarCarrito(false);
+        toast.success("Carrito vaciado correctamente");
+    };
+
     const total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+    const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
 
     // Cálculo de Envío con lógica de umbral
     const costoEnvio = useMemo(() => {
@@ -208,17 +234,46 @@ export default function RegistrarVenta() {
         if (minimo > 0 && total >= minimo) return reducido;
         return configCosto;
     }, [tipoEntrega, total, costoEnvioConfig, minimoGratisConfig, costoEnvioReducidoConfig]);
+
     const totalFinal = total + costoEnvio;
     const cambio = (pagaCon && metodoPago === "efectivo") ? (Number(pagaCon) - totalFinal) : 0;
 
+    // Sugerencias de billetes rápidos para cobro en efectivo
+    const billetesSugeridos = useMemo(() => {
+        if (!totalFinal || totalFinal <= 0 || metodoPago !== "efectivo") return [];
+        const sugerencias = new Set();
+
+        // Monto exacto
+        sugerencias.add(totalFinal);
+
+        // Múltiplos comunes
+        const prox5k = Math.ceil(totalFinal / 5000) * 5000;
+        if (prox5k > totalFinal) sugerencias.add(prox5k);
+
+        const prox10k = Math.ceil(totalFinal / 10000) * 10000;
+        if (prox10k > totalFinal) sugerencias.add(prox10k);
+
+        const billetes = [20000, 50000, 100000];
+        billetes.forEach(b => {
+            if (b > totalFinal && sugerencias.size < 5) sugerencias.add(b);
+        });
+
+        return Array.from(sugerencias).sort((a, b) => a - b).slice(0, 5);
+    }, [totalFinal, metodoPago]);
+
     const abrirConfirmacion = () => {
-        if (carrito.length === 0) return;
+        if (carrito.length === 0) {
+            toast.error("El carrito está vacío");
+            return;
+        }
         if (tipoEntrega === "domicilio" && !direccion.trim()) {
-            toast.error("Debes ingresar la dirección para domicilio");
+            setDetallesCobroAbierto(true);
+            toast.error("Debes ingresar la dirección de entrega");
             return;
         }
         if (metodoPago === "efectivo" && pagaCon && Number(pagaCon) < totalFinal) {
-            toast.error("El monto de pago es menor al total");
+            setDetallesCobroAbierto(true);
+            toast.error("El monto de pago es inferior al total");
             return;
         }
         setModalConfirmacion(true);
@@ -230,7 +285,7 @@ export default function RegistrarVenta() {
             // 0. Sanitizar carrito antes de procesar
             const sanitizedCarrito = sanitizeCarritoItems(carrito);
             if (!sanitizedCarrito || sanitizedCarrito.length === 0) {
-                throw new Error("Carrito vacío o corrupto. Reinícialo antes de continuar.");
+                throw new Error("Carrito vacío o con datos inválidos.");
             }
 
             // 1. Verificar stock nuevamente
@@ -246,7 +301,7 @@ export default function RegistrarVenta() {
                 }
             }
 
-            // 2. Crear pedido con TODOS los campos requeridos
+            // 2. Crear pedido con todos los campos requeridos
             const pedido = {
                 cliente_nombre: clienteNombre || "Venta en Caja",
                 cliente_direccion: tipoEntrega === "domicilio" ? direccion : null,
@@ -294,7 +349,7 @@ export default function RegistrarVenta() {
             setDireccion("");
             setPagaCon("");
             setModalConfirmacion(false);
-            setMostrarCarrito(false);
+            setMostrarCarritoMobile(false);
             cargarDatos(); // Recargar stock
 
         } catch (error) {
@@ -306,61 +361,87 @@ export default function RegistrarVenta() {
     };
 
     return (
-        <div className="bg-slate-50/50 flex flex-col lg:flex-row absolute inset-0 top-16 lg:top-20 overflow-hidden">
-            {/* ==============================================
-                SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS 
-               ============================================== */}
+        <div className="bg-slate-100 flex flex-col lg:flex-row absolute inset-0 top-16 lg:top-20 overflow-hidden select-none">
+            
+            {/* =========================================================================
+                SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS (ADAPTABLE)
+               ========================================================================= */}
             <div className="flex-1 flex flex-col h-full overflow-hidden relative z-0">
 
                 {/* HEADER Y FILTROS */}
-                <header className="bg-white px-4 py-4 md:px-6 md:py-5 border-b border-slate-200 shadow-sm z-10 shrink-0">
-                    <div className="flex flex-col gap-4 max-w-7xl mx-auto w-full">
-                        {/* Título y Configuración */}
-                        <div className="flex justify-between items-center pt-2">
-                            <div>
-                                <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                                    <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
-                                        <IoGrid size={20} />
-                                    </div>
-                                    Nueva Venta
-                                </h1>
+                <header className="bg-white px-4 py-3.5 md:px-6 md:py-4 border-b border-slate-200 shadow-sm z-10 shrink-0">
+                    <div className="flex flex-col gap-3 max-w-7xl mx-auto w-full">
+                        
+                        {/* Fila 1: Título, Configuración y Toggle de Carrito Desktop */}
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2.5">
+                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl shadow-sm">
+                                    <IoGrid size={20} />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg md:text-xl font-extrabold text-slate-900 leading-tight">
+                                        Punto de Venta
+                                    </h1>
+                                    <p className="text-xs text-slate-500 hidden sm:block">
+                                        {productosFiltrados.length} productos disponibles
+                                    </p>
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setConfigOpen(true)}
-                                className="p-2 md:px-4 md:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors flex items-center gap-2"
-                                title="Configuración de Envío"
-                            >
-                                <IoSettingsOutline size={20} />
-                                <span className="hidden md:inline">$ Domicilio</span>
-                            </button>
+
+                            <div className="flex items-center gap-2">
+                                {/* Botón Configuración de Envío */}
+                                <button
+                                    onClick={() => setConfigOpen(true)}
+                                    className="p-2 md:px-3.5 md:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-all flex items-center gap-2 text-sm active:scale-95 cursor-pointer"
+                                    title="Configuración de Domicilio"
+                                >
+                                    <IoSettingsOutline size={18} className="text-indigo-600" />
+                                    <span className="hidden md:inline">Tarifas Domicilio</span>
+                                </button>
+
+                                {/* Botón para abrir/cerrar carrito en PC si está colapsado */}
+                                <button
+                                    onClick={() => setSidebarDesktopAbierto(prev => !prev)}
+                                    className={`hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold transition-all border cursor-pointer ${
+                                        sidebarDesktopAbierto
+                                            ? "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"
+                                            : "bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-md shadow-indigo-500/20"
+                                    }`}
+                                    title={sidebarDesktopAbierto ? "Ocultar panel del carrito" : "Mostrar panel del carrito"}
+                                >
+                                    <IoCartOutline size={18} />
+                                    <span>{sidebarDesktopAbierto ? "Ocultar Resumen" : `Ver Carrito (${totalItems})`}</span>
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Barra de Búsqueda y Filtros */}
-                        <div className="flex gap-3">
+                        {/* Fila 2: Buscador y Categorías */}
+                        <div className="flex gap-2.5">
                             <div className="relative flex-1">
-                                <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
+                                <IoSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-lg" />
                                 <input
                                     type="text"
-                                    placeholder="Buscar productos..."
+                                    placeholder="Buscar por nombre de producto..."
                                     value={busqueda}
                                     onChange={(e) => setBusqueda(e.target.value)}
-                                    className="w-full pl-10 pr-10 py-2.5 bg-slate-100 border-transparent focus:bg-white border focus:border-indigo-500 rounded-xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-slate-800 placeholder:text-slate-400"
+                                    className="w-full pl-10 pr-10 py-2 bg-slate-100 border border-transparent focus:border-indigo-500 focus:bg-white rounded-xl focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400"
                                 />
                                 {busqueda && (
                                     <button
                                         onClick={() => setBusqueda("")}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 bg-slate-200/50 rounded-full"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 bg-slate-200/60 rounded-full cursor-pointer"
                                     >
                                         <IoClose size={14} />
                                     </button>
                                 )}
                             </div>
+
                             <select
                                 value={filtroCategoria}
                                 onChange={(e) => setFiltroCategoria(e.target.value)}
-                                className="w-1/3 md:w-48 pl-3 pr-8 py-2.5 bg-slate-100 border-transparent focus:bg-white border focus:border-indigo-500 rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-700 font-medium cursor-pointer text-sm md:text-base truncate"
+                                className="w-2/5 sm:w-48 px-3 py-2 bg-slate-100 border border-transparent focus:border-indigo-500 focus:bg-white rounded-xl focus:ring-4 focus:ring-indigo-500/10 outline-none text-slate-700 font-semibold cursor-pointer text-xs sm:text-sm truncate"
                             >
-                                <option value="">Todas</option>
+                                <option value="">Todas las Categorías</option>
                                 {categorias.map(c => (
                                     <option key={c.id} value={c.id}>{c.nombre}</option>
                                 ))}
@@ -370,13 +451,19 @@ export default function RegistrarVenta() {
                 </header>
 
                 {/* GRID DE PRODUCTOS */}
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50/50 scroll-smooth">
+                <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-slate-100/70 scroll-smooth">
                     <div className="max-w-7xl mx-auto">
                         {loading ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+                            <div className={`grid gap-3 sm:gap-4 ${
+                                sidebarDesktopAbierto
+                                    ? modoAnchoDesktop
+                                        ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+                                        : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                                    : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                            }`}>
                                 {[...Array(10)].map((_, i) => (
-                                    <div key={i} className="bg-white rounded-xl p-3 shadow-sm border border-slate-100 h-64 animate-pulse flex flex-col">
-                                        <div className="bg-slate-200 rounded-lg w-full aspect-square mb-3"></div>
+                                    <div key={i} className="bg-white rounded-2xl p-3 shadow-sm border border-slate-200/60 h-64 animate-pulse flex flex-col">
+                                        <div className="bg-slate-200 rounded-xl w-full aspect-square mb-3"></div>
                                         <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
                                         <div className="h-3 bg-slate-200 rounded w-1/2 mt-auto"></div>
                                     </div>
@@ -384,19 +471,26 @@ export default function RegistrarVenta() {
                             </div>
                         ) : productosFiltrados.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-64 md:h-96 text-center px-4">
-                                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+                                <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center mb-4 text-slate-300">
                                     <IoSearch size={40} />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-700">No se encontraron productos</h3>
-                                <p className="text-slate-500 max-w-xs mx-auto mt-1">
-                                    Intenta con otra búsqueda o cambia la categoría.
+                                <h3 className="text-lg font-bold text-slate-700">No se encontraron productos</h3>
+                                <p className="text-slate-500 max-w-xs mx-auto mt-1 text-sm">
+                                    Prueba con otra palabra clave o selecciona otra categoría.
                                 </p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 pb-24 lg:pb-0">
+                            <div className={`grid gap-3 sm:gap-4 pb-28 lg:pb-6 ${
+                                sidebarDesktopAbierto
+                                    ? modoAnchoDesktop
+                                        ? "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4"
+                                        : "grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+                                    : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                            }`}>
                                 {productosFiltrados.map(producto => {
                                     const sinStock = producto.stock <= 0;
                                     const pocoStock = producto.stock > 0 && producto.stock <= 5;
+                                    const enCarrito = carrito.find(item => item.id === producto.id);
 
                                     return (
                                         <div
@@ -405,27 +499,27 @@ export default function RegistrarVenta() {
                                                 if (!sinStock) agregarProducto(producto);
                                             }}
                                             className={`
-                                                relative bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-lg hover:border-indigo-300 transition-all duration-200 
+                                                relative bg-white rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md hover:border-indigo-300 transition-all duration-200 
                                                 flex flex-col text-left group overflow-hidden cursor-pointer
                                                 ${sinStock ? "opacity-60 cursor-not-allowed grayscale" : "active:scale-[0.98]"}
                                             `}
                                         >
                                             {/* Badge de Stock */}
-                                            <div className="absolute top-2 right-2 z-10 flex gap-1">
+                                            <div className="absolute top-2.5 right-2.5 z-10 flex gap-1">
                                                 {pocoStock && (
-                                                    <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border border-orange-200">
+                                                    <span className="bg-amber-100/90 backdrop-blur-sm text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border border-amber-200">
                                                         Quedan {producto.stock}
                                                     </span>
                                                 )}
                                             </div>
 
                                             {/* Imagen */}
-                                            <div className="aspect-square bg-slate-100 relative overflow-hidden">
+                                            <div className="aspect-square bg-slate-50 relative overflow-hidden flex items-center justify-center">
                                                 {producto.imagen_url ? (
                                                     <img
                                                         src={producto.imagen_url}
                                                         alt={producto.nombre}
-                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                         loading="lazy"
                                                     />
                                                 ) : (
@@ -434,44 +528,39 @@ export default function RegistrarVenta() {
                                                     </div>
                                                 )}
                                                 {sinStock && (
-                                                    <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px] flex items-center justify-center">
-                                                        <span className="bg-black/70 text-white text-xs font-bold px-3 py-1 rounded-full">AGOTADO</span>
+                                                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[1px] flex items-center justify-center">
+                                                        <span className="bg-white text-slate-900 text-xs font-black px-3 py-1 rounded-full shadow">AGOTADO</span>
                                                     </div>
-                                                )}
-                                                {/* Overlay hover */}
-                                                {!sinStock && (
-                                                    <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors duration-200" />
                                                 )}
                                             </div>
 
                                             {/* Info */}
-                                            <div className="p-3 flex flex-col flex-1 gap-1">
-                                                <h3 className="font-semibold text-slate-800 text-sm leading-snug line-clamp-2 md:line-clamp-2" title={producto.nombre}>
+                                            <div className="p-3 sm:p-3.5 flex flex-col flex-1 gap-1">
+                                                <h3 className="font-semibold text-slate-800 text-xs sm:text-sm leading-snug line-clamp-2" title={producto.nombre}>
                                                     {producto.nombre}
                                                 </h3>
-                                                <div className="mt-auto pt-2 flex items-center justify-between">
-                                                    <span className="text-base md:text-lg font-bold text-slate-900">
-                                                        ${parseInt(producto.precio).toLocaleString("es-CO")}
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-xs font-semibold ${pocoStock ? "text-orange-600" : "text-slate-500"}`}>
-                                                            {producto.stock} und.
+                                                
+                                                <div className="mt-auto pt-2 flex items-center justify-between gap-1">
+                                                    <div>
+                                                        <span className="text-sm sm:text-base font-extrabold text-slate-900 block leading-tight">
+                                                            ${parseInt(producto.precio).toLocaleString("es-CO")}
                                                         </span>
-                                                        {!sinStock && (
-                                                            (() => {
-                                                                const enCarrito = carrito.find(item => item.id === producto.id);
-                                                                return enCarrito ? (
-                                                                    <div className="w-10 h-10 lg:w-8 lg:h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold shadow-md text-lg lg:text-sm animate-in zoom-in-50 duration-200">
-                                                                        {enCarrito.cantidad}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="w-10 h-10 lg:w-8 lg:h-8 rounded-full bg-slate-50 text-indigo-600 flex items-center justify-center shadow-sm group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                                                                        <IoAdd size={24} className="lg:w-5 lg:h-5" />
-                                                                    </div>
-                                                                );
-                                                            })()
-                                                        )}
+                                                        <span className={`text-[11px] font-semibold ${pocoStock ? "text-amber-600" : "text-slate-400"}`}>
+                                                            Stock: {producto.stock}
+                                                        </span>
                                                     </div>
+
+                                                    {!sinStock && (
+                                                        enCarrito ? (
+                                                            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-md shadow-indigo-500/20">
+                                                                {enCarrito.cantidad}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-8 h-8 rounded-xl bg-slate-100 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-sm">
+                                                                <IoAdd size={18} />
+                                                            </div>
+                                                        )
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
@@ -483,129 +572,224 @@ export default function RegistrarVenta() {
                 </main>
 
                 {/* BARRA INFERIOR FLOTANTE (SOLO MOBILE) */}
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-40 flex items-center gap-3">
-                    <div className="flex-1">
-                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Total</p>
-                        <p className="text-2xl font-black text-slate-900 leading-none">
-                            ${totalFinal.toLocaleString("es-CO")}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => setMostrarCarrito(true)}
-                        className="bg-slate-900 text-white px-5 py-3 rounded-xl font-bold flex items-center gap-2.5 shadow-lg active:scale-95 transition-all text-sm"
-                    >
-                        <div className="relative">
-                            <IoCartOutline size={22} />
-                            {carrito.length > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-indigo-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-slate-900">
-                                    {carrito.reduce((acc, i) => acc + i.cantidad, 0)}
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 p-3 px-4 shadow-[0_-8px_25px_rgba(0,0,0,0.12)] z-40 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-semibold">
+                            <span>Total ({totalItems} items)</span>
+                            {tipoEntrega === "domicilio" && (
+                                <span className="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                                    Domicilio
                                 </span>
                             )}
                         </div>
-                        <span>Ver Carrito</span>
-                    </button>
-                </div>
-            </div >
-
-            {/* ==============================================
-                SECCIÓN DERECHA: CARRITO Y CHECKOUT 
-               ============================================== */}
-            < div className={`
-                fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm lg:static lg:bg-white lg:z-auto lg:w-[520px] lg:border-l lg:border-slate-200 transition-all duration-300
-                ${mostrarCarrito ? "opacity-100 visible" : "opacity-0 invisible lg:opacity-100 lg:visible"}
-            `}>
-                <div className={`
-                    absolute inset-y-0 right-0 w-full max-w-[560px] bg-white shadow-2xl lg:shadow-none flex flex-col h-full transform transition-transform duration-300 ease-out
-                    ${mostrarCarrito ? "translate-x-0" : "translate-x-full lg:translate-x-0"}
-                `}>
-
-                    {/* Header Carrito */}
-                    <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-indigo-50 p-2 rounded-lg text-indigo-600">
-                                <IoCartOutline size={20} />
-                            </div>
-                            <h2 className="text-2xl font-bold text-slate-800">
-                                Resumen del Pedido
-                            </h2>
-                            <span className="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-full">
-                                {carrito.length} items
-                            </span>
-                        </div>
-                        <button
-                            onClick={() => setMostrarCarrito(false)}
-                            className="lg:hidden p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                        >
-                            <IoClose size={24} />
-                        </button>
+                        <p className="text-xl sm:text-2xl font-black text-slate-900 leading-tight truncate">
+                            ${totalFinal.toLocaleString("es-CO")}
+                        </p>
                     </div>
 
-                    {/* Lista de Items Scrollable */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
+                    <button
+                        onClick={() => setMostrarCarritoMobile(true)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-xl font-bold flex items-center gap-2.5 shadow-lg shadow-indigo-500/30 active:scale-95 transition-all text-sm shrink-0 cursor-pointer"
+                    >
+                        <div className="relative">
+                            <IoCartOutline size={22} />
+                            {totalItems > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-900 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-indigo-600">
+                                    {totalItems}
+                                </span>
+                            )}
+                        </div>
+                        <span>Ver Pedido</span>
+                    </button>
+                </div>
+
+                {/* BOTÓN FLOTANTE EN DESKTOP SI EL SIDEBAR ESTÁ OCULTO */}
+                {!sidebarDesktopAbierto && (
+                    <button
+                        onClick={() => setSidebarDesktopAbierto(true)}
+                        className="hidden lg:flex fixed right-6 bottom-6 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3.5 rounded-2xl shadow-2xl items-center gap-3 z-30 transition-all hover:scale-105 active:scale-95 border-2 border-white/20 cursor-pointer"
+                    >
+                        <div className="relative">
+                            <IoCart size={24} />
+                            {totalItems > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-900 text-xs font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-indigo-600">
+                                    {totalItems}
+                                </span>
+                            )}
+                        </div>
+                        <div className="text-left">
+                            <p className="text-[10px] uppercase font-bold text-indigo-200">Resumen Carrito</p>
+                            <p className="text-base font-extrabold leading-none">${totalFinal.toLocaleString("es-CO")}</p>
+                        </div>
+                        <IoChevronBack size={18} className="text-indigo-200" />
+                    </button>
+                )}
+            </div>
+
+            {/* =========================================================================
+                SECCIÓN DERECHA: CARRITO Y RESUMEN DEL PEDIDO
+               ========================================================================= */}
+            <div className={`
+                fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm transition-all duration-300
+                ${sidebarDesktopAbierto ? "lg:static lg:bg-transparent lg:z-auto lg:visible lg:opacity-100" : "lg:hidden"}
+                ${sidebarDesktopAbierto && modoAnchoDesktop ? "lg:w-[580px]" : "lg:w-[440px]"}
+                ${mostrarCarritoMobile ? "opacity-100 visible" : "opacity-0 invisible lg:opacity-100 lg:visible"}
+            `}>
+                <div className={`
+                    absolute inset-y-0 right-0 w-full max-w-[600px] lg:max-w-none bg-white shadow-2xl lg:shadow-none flex flex-col h-full transform transition-transform duration-300 ease-out border-l border-slate-200
+                    ${mostrarCarritoMobile ? "translate-x-0" : "translate-x-full lg:translate-x-0"}
+                `}>
+
+                    {/* HEADER DEL RESUMEN */}
+                    <div className="px-5 py-4 border-b border-slate-200/80 flex items-center justify-between bg-white shrink-0">
+                        <div className="flex items-center gap-2.5">
+                            <div className="bg-indigo-50 p-2 rounded-xl text-indigo-600">
+                                <IoReceiptOutline size={20} />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-extrabold text-slate-800 leading-tight">
+                                    Resumen del Pedido
+                                </h2>
+                                <p className="text-xs text-slate-500 font-medium">
+                                    {totalItems} {totalItems === 1 ? "unidad" : "unidades"} ({carrito.length} productos)
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            {/* Botón Vaciar Carrito */}
+                            {carrito.length > 0 && (
+                                <button
+                                    onClick={() => setModalVaciarCarrito(true)}
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                    title="Vaciar carrito"
+                                >
+                                    <IoTrashOutline size={18} />
+                                </button>
+                            )}
+
+                            {/* Toggle Ancho Amplio / Compacto (Desktop) */}
+                            <button
+                                onClick={() => setModoAnchoDesktop(prev => !prev)}
+                                className="hidden lg:flex p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                                title={modoAnchoDesktop ? "Vista compacta" : "Vista amplia del carrito"}
+                            >
+                                {modoAnchoDesktop ? <IoContractOutline size={18} /> : <IoExpandOutline size={18} />}
+                            </button>
+
+                            {/* Botón Minimizar Panel en PC */}
+                            <button
+                                onClick={() => setSidebarDesktopAbierto(false)}
+                                className="hidden lg:flex p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                                title="Ocultar resumen"
+                            >
+                                <IoChevronForward size={20} />
+                            </button>
+
+                            {/* Botón Cerrar Drawer en Móvil */}
+                            <button
+                                onClick={() => setMostrarCarritoMobile(false)}
+                                className="lg:hidden p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                            >
+                                <IoClose size={24} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* LISTA DE PRODUCTOS CON SCROLL */}
+                    <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-slate-50/60 scroll-smooth">
                         {carrito.length === 0 ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-60">
-                                <div className="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                                    <IoCartOutline size={48} />
+                            <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-70">
+                                <div className="w-20 h-20 bg-slate-200/70 rounded-2xl flex items-center justify-center mb-3 text-slate-400">
+                                    <IoCartOutline size={40} />
                                 </div>
-                                <h3 className="text-lg font-semibold text-slate-700">Tu carrito está vacío</h3>
-                                <p className="text-slate-500 text-sm mt-2">Agrega productos del catálogo para comenzar una venta.</p>
+                                <h3 className="text-base font-bold text-slate-700">El carrito está vacío</h3>
+                                <p className="text-slate-500 text-xs max-w-xs mt-1">
+                                    Haz clic en cualquier producto del catálogo para agregarlo a la venta.
+                                </p>
                             </div>
                         ) : (
                             carrito.map(item => (
-                                <div key={item.id} className="group bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex gap-4 hover:border-indigo-200 transition-colors">
+                                <div
+                                    key={item.id}
+                                    className="group bg-white p-3.5 rounded-2xl border border-slate-200/80 hover:border-indigo-300 shadow-sm transition-all flex gap-3.5 items-center"
+                                >
                                     {/* Imagen Item */}
-                                    <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0 border border-slate-100">
+                                    <div className="w-16 h-16 bg-slate-100 rounded-xl overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center">
                                         {item.imagen_url ? (
-                                            <img src={item.imagen_url} alt="" className="w-full h-full object-cover" />
+                                            <img src={item.imagen_url} alt={item.nombre} className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                                <IoCartOutline size={20} />
-                                            </div>
+                                            <IoCartOutline size={22} className="text-slate-300" />
                                         )}
                                     </div>
 
-                                    {/* Info Item */}
+                                    {/* Info & Controles */}
                                     <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                                         <div className="flex justify-between items-start gap-2">
-                                            <h4 className="font-semibold text-slate-800 text-sm line-clamp-2 leading-tight">
-                                                {item.nombre}
-                                            </h4>
-                                            <p className="font-bold text-indigo-600 text-sm whitespace-nowrap">
+                                            <div className="min-w-0">
+                                                <h4 className="font-bold text-slate-800 text-xs sm:text-sm line-clamp-1 leading-snug" title={item.nombre}>
+                                                    {item.nombre}
+                                                </h4>
+                                                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                                                    ${parseInt(item.precio).toLocaleString("es-CO")} c/u
+                                                </p>
+                                            </div>
+                                            <p className="font-extrabold text-indigo-600 text-sm whitespace-nowrap">
                                                 ${(item.precio * item.cantidad).toLocaleString("es-CO")}
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center justify-between mt-2">
-                                            <div className="text-xs text-slate-500 font-medium">
-                                                ${parseInt(item.precio).toLocaleString("es-CO")} c/u
+                                        <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-slate-100">
+                                            {/* Indicador de stock */}
+                                            <div className="text-[11px] font-medium">
+                                                {item.cantidad >= item.stock ? (
+                                                    <span className="text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md font-bold">
+                                                        Máx stock ({item.stock})
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-400">
+                                                        Stock: {item.stock}
+                                                    </span>
+                                                )}
                                             </div>
 
-                                            <div className="flex items-center gap-3">
-                                                {/* Control Cantidad */}
+                                            <div className="flex items-center gap-2">
+                                                {/* Stepper Cantidad */}
                                                 <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200">
                                                     <button
+                                                        type="button"
                                                         onClick={() => actualizarCantidad(item.id, -1)}
-                                                        className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm rounded-md transition-all active:scale-95"
+                                                        className="w-7 h-7 flex items-center justify-center text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm rounded-md transition-all active:scale-90 cursor-pointer"
+                                                        title="Reducir cantidad"
                                                     >
                                                         <IoRemove size={14} />
                                                     </button>
-                                                    <span className="w-8 text-center text-sm font-bold text-slate-700 font-mono">
+                                                    <span className="w-7 text-center text-xs sm:text-sm font-bold text-slate-800 font-mono">
                                                         {item.cantidad}
                                                     </span>
                                                     <button
+                                                        type="button"
                                                         onClick={() => actualizarCantidad(item.id, 1)}
-                                                        className="w-7 h-7 flex items-center justify-center text-slate-500 hover:bg-white hover:text-slate-700 hover:shadow-sm rounded-md transition-all active:scale-95"
+                                                        disabled={item.cantidad >= item.stock}
+                                                        className={`w-7 h-7 flex items-center justify-center rounded-md transition-all active:scale-90 ${
+                                                            item.cantidad >= item.stock
+                                                                ? "text-slate-300 cursor-not-allowed"
+                                                                : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm cursor-pointer"
+                                                        }`}
+                                                        title="Aumentar cantidad"
                                                     >
                                                         <IoAdd size={14} />
                                                     </button>
                                                 </div>
 
+                                                {/* Eliminar Ítem */}
                                                 <button
+                                                    type="button"
                                                     onClick={() => eliminarProducto(item.id)}
-                                                    className="text-slate-300 hover:text-rose-500 transition-colors p-1"
+                                                    className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors p-1 cursor-pointer"
                                                     title="Eliminar producto"
                                                 >
-                                                    <IoTrashBin size={18} />
+                                                    <IoTrashOutline size={16} />
                                                 </button>
                                             </div>
                                         </div>
@@ -615,255 +799,442 @@ export default function RegistrarVenta() {
                         )}
                     </div>
 
-                    {/* Formulario y Checkout (Sticky Bottom en Panel) */}
-                    <div className="bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] shrink-0 z-10">
-                        {/* Selector Entrega & Cliente en Accordion o Compacto */}
-                        <div className="p-6 pb-0 space-y-4">
+                    {/* SECCIÓN INFERIOR: DATOS DE COBRO DESPLEGABLES Y TOTALES */}
+                    <div className="bg-white border-t border-slate-200 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] shrink-0 z-10">
+                        
+                        {/* BOTÓN DESPLEGABLE DE DATOS DE COBRO */}
+                        <div className="p-3.5 sm:p-4 pb-0">
+                            <button
+                                type="button"
+                                onClick={() => setDetallesCobroAbierto(prev => !prev)}
+                                className="w-full flex items-center justify-between p-3 bg-slate-100 hover:bg-slate-200/70 rounded-xl transition-all text-left border border-slate-200/80 active:scale-[0.99] cursor-pointer"
+                            >
+                                <div className="flex items-center gap-2.5 overflow-hidden">
+                                    <div className="p-1.5 bg-white rounded-lg text-indigo-600 shadow-sm shrink-0">
+                                        <IoReceiptOutline size={16} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                            Datos de Entrega y Pago
+                                        </p>
+                                        {/* Badges de estado actual */}
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate mt-0.5">
+                                            <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold ${
+                                                tipoEntrega === "domicilio" ? "bg-amber-100 text-amber-800" : "bg-slate-200 text-slate-700"
+                                            }`}>
+                                                {tipoEntrega === "domicilio" ? (
+                                                    <>
+                                                        <IoLocationOutline size={12} />
+                                                        <span>Domicilio</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <IoStorefrontOutline size={12} />
+                                                        <span>En Tienda</span>
+                                                    </>
+                                                )}
+                                            </span>
+                                            <span>•</span>
+                                            <span className="capitalize font-semibold text-slate-700">{metodoPago}</span>
+                                            {clienteNombre && (
+                                                <>
+                                                    <span>•</span>
+                                                    <span className="truncate text-slate-600">{clienteNombre}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
 
-                            {/* Tabs Tipo Entrega */}
-                            <div className="flex p-1 bg-slate-100 rounded-xl">
-                                <button
-                                    onClick={() => setTipoEntrega("recoger")}
-                                    className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2
-                                        ${tipoEntrega === "recoger" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                                >
-                                    <IoGrid size={16} /> En Tienda
-                                </button>
-                                <button
-                                    onClick={() => setTipoEntrega("domicilio")}
-                                    className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2
-                                        ${tipoEntrega === "domicilio" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
-                                >
-                                    <IoLocationOutline size={16} /> Domicilio
-                                </button>
-                            </div>
+                                <div className="flex items-center gap-1 text-indigo-600 text-xs font-bold shrink-0 ml-2">
+                                    <span className="hidden sm:inline">{detallesCobroAbierto ? "Ocultar" : "Modificar"}</span>
+                                    {detallesCobroAbierto ? <IoChevronUp size={18} /> : <IoChevronDown size={18} />}
+                                </div>
+                            </button>
+                        </div>
 
-                            {/* Info Cliente (Grid Compacto) */}
-                            <div className="grid grid-cols-1 gap-3">
-                                <input
-                                    type="text"
-                                    placeholder="Nombre Cliente (Opcional)"
-                                    value={clienteNombre}
-                                    onChange={(e) => setClienteNombre(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                                />
+                        {/* CONTENIDO DESPLEGABLE (FORMULARIO) */}
+                        {detallesCobroAbierto && (
+                            <div className="p-3.5 sm:p-4 space-y-3 max-h-[320px] overflow-y-auto animate-in slide-in-from-bottom-2 duration-200">
+                                
+                                {/* Selector Tipo Entrega */}
+                                <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setTipoEntrega("recoger")}
+                                        className={`py-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer
+                                            ${tipoEntrega === "recoger" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                                    >
+                                        <IoStorefrontOutline size={16} /> En Tienda
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTipoEntrega("domicilio")}
+                                        className={`py-2 text-xs sm:text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer
+                                            ${tipoEntrega === "domicilio" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                                    >
+                                        <IoLocationOutline size={16} /> Domicilio
+                                    </button>
+                                </div>
 
+                                {/* Nombre del Cliente */}
+                                <div className="relative">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                        <IoPersonOutline size={14} />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre del cliente (opcional)"
+                                        value={clienteNombre}
+                                        onChange={(e) => setClienteNombre(e.target.value)}
+                                        className="w-full pl-8 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                    />
+                                    {clienteNombre && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setClienteNombre("")}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                                        >
+                                            <IoClose size={14} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Campo Dirección si es Domicilio */}
                                 {tipoEntrega === "domicilio" && (
-                                    <div className="space-y-2 animate-in slide-in-from-top-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Dirección completa..."
-                                            value={direccion}
-                                            onChange={(e) => setDireccion(e.target.value)}
-                                            className={`w-full px-3 py-2 bg-slate-50 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all
-                                                ${!direccion && tipoEntrega === "domicilio" ? "border-amber-300 bg-amber-50" : "border-slate-200"}`}
-                                        />
+                                    <div className="space-y-1.5 animate-in fade-in duration-200">
+                                        <div className="relative">
+                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                <IoLocationOutline size={14} />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Dirección completa de entrega..."
+                                                value={direccion}
+                                                onChange={(e) => setDireccion(e.target.value)}
+                                                className={`w-full pl-8 pr-3 py-2 bg-slate-50 border rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all
+                                                    ${!direccion ? "border-amber-300 bg-amber-50/50" : "border-slate-200"}`}
+                                            />
+                                        </div>
                                         {minimoGratisConfig > 0 && (
-                                            <div className="text-xs text-center text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-100">
-                                                Descuento en envío por compras &gt; <span className="font-bold text-slate-700">${minimoGratisConfig.toLocaleString()}</span>
+                                            <div className="text-[11px] text-slate-600 bg-indigo-50/60 p-2 rounded-lg border border-indigo-100 flex items-center justify-between">
+                                                <span>Envío con tarifa especial por compras &gt; <strong className="text-indigo-700">${minimoGratisConfig.toLocaleString("es-CO")}</strong></span>
+                                                {total >= minimoGratisConfig && (
+                                                    <span className="text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.5 rounded text-[10px]">Aplicado</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Método de Pago */}
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                                        Método de Pago
+                                    </label>
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                        {[
+                                            { id: "efectivo", label: "Efectivo", icon: <IoCashOutline /> },
+                                            { id: "nequi", label: "Nequi", icon: <IoPhonePortraitOutline /> },
+                                            { id: "daviplata", label: "Daviplata", icon: <IoPhonePortraitOutline /> },
+                                            { id: "tarjeta", label: "Tarjeta", icon: <IoCardOutline /> }
+                                        ].map(m => (
+                                            <button
+                                                key={m.id}
+                                                type="button"
+                                                onClick={() => setMetodoPago(m.id)}
+                                                className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all flex flex-col items-center gap-1 cursor-pointer
+                                                    ${metodoPago === m.id
+                                                        ? "bg-indigo-50 text-indigo-700 border-indigo-300 shadow-sm"
+                                                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"}`}
+                                            >
+                                                <span className="text-base">{m.icon}</span>
+                                                <span className="truncate">{m.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Opciones de Efectivo (Paga con + Billetes Rápidos) */}
+                                {metodoPago === "efectivo" && (
+                                    <div className="space-y-2 pt-1 border-t border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative flex-1">
+                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                                                <input
+                                                    type="number"
+                                                    placeholder="¿Con cuánto paga?"
+                                                    value={pagaCon}
+                                                    onChange={(e) => setPagaCon(e.target.value)}
+                                                    className={`w-full pl-7 pr-3 py-2 bg-slate-50 border rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold
+                                                        ${pagaCon && Number(pagaCon) < totalFinal ? "border-rose-300 text-rose-600 bg-rose-50" : "border-slate-200"}`}
+                                                />
+                                            </div>
+
+                                            {pagaCon && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPagaCon("")}
+                                                    className="px-2 py-2 text-xs text-slate-500 hover:text-slate-700 bg-slate-100 rounded-lg cursor-pointer font-medium"
+                                                >
+                                                    Limpiar
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Chips de Billetes Rápidos */}
+                                        {billetesSugeridos.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 items-center">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase">Rápido:</span>
+                                                {billetesSugeridos.map(monto => (
+                                                    <button
+                                                        key={monto}
+                                                        type="button"
+                                                        onClick={() => setPagaCon(monto.toString())}
+                                                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border cursor-pointer
+                                                            ${Number(pagaCon) === monto
+                                                                ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                                                                : "bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200"}`}
+                                                    >
+                                                        {monto === totalFinal ? "Exacto" : `$${monto.toLocaleString("es-CO")}`}
+                                                    </button>
+                                                ))}
                                             </div>
                                         )}
                                     </div>
                                 )}
                             </div>
+                        )}
 
-                            {/* Método Pago y Cambio */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <select
-                                    value={metodoPago}
-                                    onChange={(e) => setMetodoPago(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
-                                >
-                                    <option value="efectivo">Efectivo</option>
-                                    <option value="nequi">Nequi</option>
-                                    <option value="daviplata">Daviplata</option>
-                                    <option value="tarjeta">Tarjeta</option>
-                                </select>
-
-                                {metodoPago === "efectivo" ? (
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
-                                        <input
-                                            type="number"
-                                            placeholder="Paga con..."
-                                            value={pagaCon}
-                                            onChange={(e) => setPagaCon(e.target.value)}
-                                            className={`w-full pl-6 pr-2 py-2 bg-slate-50 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none
-                                                ${pagaCon && Number(pagaCon) < totalFinal ? "border-rose-300 text-rose-600 bg-rose-50" : "border-slate-200"}`}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-center text-xs text-slate-400 bg-slate-50 rounded-lg border border-slate-200 italic">
-                                        Sin cambio
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Totales y Botón Acción */}
-                        <div className="p-6 bg-slate-50/50 mt-4 space-y-4">
-                            <div className="space-y-1 text-sm">
+                        {/* TOTALES Y BOTÓN DE CONFIRMAR VENTA */}
+                        <div className="p-4 sm:p-5 bg-slate-50/80 border-t border-slate-200/80 space-y-3">
+                            
+                            {/* Desglose de Totales */}
+                            <div className="space-y-1 text-xs sm:text-sm">
                                 <div className="flex justify-between text-slate-500">
                                     <span>Subtotal</span>
-                                    <span>${total.toLocaleString("es-CO")}</span>
+                                    <span className="font-semibold text-slate-700">${total.toLocaleString("es-CO")}</span>
                                 </div>
+
                                 {tipoEntrega === "domicilio" && (
                                     <div className="flex justify-between text-slate-500">
-                                        <span>Domicilio</span>
-                                        <span className={costoEnvio === 0 ? "text-emerald-600 font-bold" : ""}>
+                                        <span>Costo de Envío</span>
+                                        <span className={`font-semibold ${costoEnvio === 0 ? "text-emerald-600 font-bold" : "text-slate-700"}`}>
                                             {costoEnvio === 0 ? "GRATIS" : `$${costoEnvio.toLocaleString("es-CO")}`}
                                         </span>
                                     </div>
                                 )}
-                                {metodoPago === "efectivo" && pagaCon && Number(pagaCon) >= totalFinal && (
-                                    <div className="flex justify-between text-emerald-600 font-bold pt-1">
-                                        <span>Cambio</span>
+
+                                {metodoPago === "efectivo" && pagaCon && (
+                                    Number(pagaCon) >= totalFinal ? (
+                                        <div className="flex justify-between text-emerald-600 font-bold pt-1 border-t border-slate-200/60">
+                                            <span>Cambio a devolver</span>
+                                            <span className="text-base">${cambio.toLocaleString("es-CO")}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-between text-rose-500 font-bold pt-1 border-t border-slate-200/60 text-xs">
+                                            <span>Falta por pagar</span>
+                                            <span>${(totalFinal - Number(pagaCon)).toLocaleString("es-CO")}</span>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+
+                            {/* Total General */}
+                            <div className="flex justify-between items-end pt-2 border-t border-slate-200">
+                                <div>
+                                    <span className="text-slate-500 text-xs font-semibold uppercase tracking-wider block">
+                                        Total a Cobrar
+                                    </span>
+                                    <span className="text-2xl sm:text-3xl font-black text-slate-900 leading-none">
+                                        ${totalFinal.toLocaleString("es-CO")}
+                                    </span>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={abrirConfirmacion}
+                                    disabled={carrito.length === 0 || procesando}
+                                    className={`px-5 py-3 rounded-xl font-extrabold text-sm sm:text-base shadow-lg flex items-center justify-center gap-2 transition-all transform active:scale-95 cursor-pointer
+                                        ${carrito.length === 0 || procesando
+                                            ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+                                            : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/25 hover:shadow-indigo-500/40"
+                                        }`}
+                                >
+                                    {procesando ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>Procesando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>Cobrar</span>
+                                            <IoCheckmarkCircle size={20} />
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* MODAL: CONFIRMACIÓN DE VENTA */}
+            {modalConfirmacion && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <IoCheckmarkCircle size={36} />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 mb-1">Confirmar Venta</h3>
+                            
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 my-4 text-left space-y-2 text-xs sm:text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500">Productos:</span>
+                                    <span className="font-bold text-slate-800">{totalItems} und. ({carrito.length} tipos)</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500">Entrega:</span>
+                                    <span className="font-bold text-slate-800 capitalize">
+                                        {tipoEntrega === "domicilio" ? `Domicilio (${direccion})` : "En Tienda"}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500">Pago:</span>
+                                    <span className="font-bold text-slate-800 capitalize">{metodoPago}</span>
+                                </div>
+                                {metodoPago === "efectivo" && pagaCon && (
+                                    <div className="flex justify-between text-emerald-600 font-bold">
+                                        <span>Cambio:</span>
                                         <span>${cambio.toLocaleString("es-CO")}</span>
                                     </div>
                                 )}
+                                <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                                    <span className="font-bold text-slate-700">Total a Cobrar:</span>
+                                    <span className="text-lg font-black text-slate-900">${totalFinal.toLocaleString("es-CO")}</span>
+                                </div>
                             </div>
 
-                            <div className="flex justify-between items-end pt-3 border-t border-slate-200">
-                                <span className="text-slate-600 font-medium pb-1">Total a Pagar</span>
-                                <span className="text-4xl font-black text-slate-900 leading-none">
-                                    ${totalFinal.toLocaleString("es-CO")}
-                                </span>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <button
+                                    onClick={() => setModalConfirmacion(false)}
+                                    className="py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-colors text-sm cursor-pointer"
+                                >
+                                    Revisar
+                                </button>
+                                <button
+                                    onClick={procesarVenta}
+                                    className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/25 text-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                    Confirmar Venta
+                                </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
+            {/* MODAL: CONFIRMAR VACIAR CARRITO */}
+            {modalVaciarCarrito && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xs overflow-hidden animate-in zoom-in-95 duration-200 p-5 text-center">
+                        <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <IoTrashOutline size={28} />
+                        </div>
+                        <h3 className="text-lg font-black text-slate-900 mb-1">Vaciar Carrito</h3>
+                        <p className="text-xs text-slate-500 mb-5">
+                            Se eliminarán todos los productos seleccionados para esta venta.
+                        </p>
+                        <div className="grid grid-cols-2 gap-2">
                             <button
-                                onClick={abrirConfirmacion}
-                                disabled={carrito.length === 0 || procesando}
-                                className={`w-full py-3.5 rounded-xl font-bold text-base md:text-lg shadow-lg flex items-center justify-center gap-2 transition-all transform active:scale-[0.98]
-                                    ${carrito.length === 0 || procesando
-                                        ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-                                        : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-500/30"
-                                    }`}
+                                onClick={() => setModalVaciarCarrito(false)}
+                                className="py-2.5 px-3 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 text-xs cursor-pointer"
                             >
-                                {procesando ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Procesando...
-                                    </>
-                                ) : (
-                                    <>
-                                        Confirmar Venta <IoCheckmarkCircle size={22} />
-                                    </>
-                                )}
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={vaciarCarrito}
+                                className="py-2.5 px-3 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 text-xs shadow-md shadow-rose-500/25 cursor-pointer"
+                            >
+                                Sí, vaciar
                             </button>
                         </div>
                     </div>
                 </div>
-            </div >
+            )}
 
-            {/* MODAL CONFIRMACIÓN (REUTILIZADO CON ESTILO MEJORADO) */}
-            {
-                modalConfirmacion && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                            <div className="p-6 text-center">
-                                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                                    <IoCheckmarkCircle size={32} />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">¿Todo listo?</h3>
-                                <p className="text-slate-500 mb-6 text-sm">
-                                    Se registrará una venta por <strong className="text-slate-800 text-base">${totalFinal.toLocaleString("es-CO")}</strong>
-                                    <br />
-                                    {tipoEntrega === "domicilio" ? " con entrega a domicilio." : " con entrega inmediata."}
-                                </p>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => setModalConfirmacion(false)}
-                                        className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
-                                    >
-                                        Volver
-                                    </button>
-                                    <button
-                                        onClick={procesarVenta}
-                                        className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30"
-                                    >
-                                        ¡Sí, Confirmar!
-                                    </button>
+            {/* MODAL: CONFIGURACIÓN DE DOMICILIOS */}
+            {configOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/70">
+                            <h3 className="font-extrabold text-slate-800 flex items-center gap-2 text-sm sm:text-base">
+                                <IoSettingsOutline className="text-indigo-600" />
+                                Tarifas de Domicilio
+                            </h3>
+                            <button onClick={() => setConfigOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                                <IoClose size={22} />
+                            </button>
+                        </div>
+                        <div className="p-5 sm:p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Costo de Envío Base</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        value={costoEnvioConfig}
+                                        onChange={(e) => setCostoEnvioConfig(e.target.value)}
+                                        className="w-full pl-7 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold text-slate-800 text-sm"
+                                    />
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* MODAL CONFIGURACIÓN (MANTENIDO IGUAL PERO CON Z-INDEX AJUSTADO) */}
-            {
-                configOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-                            <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                    <IoSettingsOutline className="text-indigo-600" />
-                                    Configuración Domicilio
-                                </h3>
-                                <button onClick={() => setConfigOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                    <IoClose size={24} />
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Monto Mínimo para Descuento</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        value={minimoGratisConfig}
+                                        onChange={(e) => setMinimoGratisConfig(e.target.value)}
+                                        className="w-full pl-7 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold text-slate-800 text-sm"
+                                    />
+                                </div>
+                                <p className="text-[11px] text-slate-500 mt-1">Monto mínimo en compras para aplicar tarifa especial.</p>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Costo de Envío con Descuento</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">$</span>
+                                    <input
+                                        type="number"
+                                        value={costoEnvioReducidoConfig}
+                                        onChange={(e) => setCostoEnvioReducidoConfig(e.target.value)}
+                                        className="w-full pl-7 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-semibold text-slate-800 text-sm"
+                                    />
+                                </div>
+                                <p className="text-[11px] text-slate-500 mt-1">Si es $0, el envío será gratis al superar el mínimo.</p>
+                            </div>
+                            <div className="pt-2 flex gap-2.5">
+                                <button
+                                    onClick={() => setConfigOpen(false)}
+                                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 text-xs cursor-pointer"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={guardarConfig}
+                                    disabled={loadingConfig}
+                                    className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 text-xs cursor-pointer"
+                                >
+                                    {loadingConfig ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>
-                            <div className="p-6 space-y-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Costo de Envío Base</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                                        <input
-                                            type="number"
-                                            value={costoEnvioConfig}
-                                            onChange={(e) => setCostoEnvioConfig(e.target.value)}
-                                            className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Umbral para Descuento</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                                        <input
-                                            type="number"
-                                            value={minimoGratisConfig}
-                                            onChange={(e) => setMinimoGratisConfig(e.target.value)}
-                                            className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-1.5">Monto mínimo para aplicar el descuento.</p>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Costo Envío con Descuento</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
-                                        <input
-                                            type="number"
-                                            value={costoEnvioReducidoConfig}
-                                            onChange={(e) => setCostoEnvioReducidoConfig(e.target.value)}
-                                            className="w-full pl-7 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-800"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-1.5">Si es $0, el envío será gratis al superar el umbral.</p>
-                                </div>
-                                <div className="pt-2 flex gap-3">
-                                    <button
-                                        onClick={() => setConfigOpen(false)}
-                                        className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={guardarConfig}
-                                        disabled={loadingConfig}
-                                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
-                                    >
-                                        {loadingConfig ? "Guardando..." : "Guardar"}
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
-                )
-            }
-        </div >
+                </div>
+            )}
+        </div>
     );
 }
