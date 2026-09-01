@@ -18,6 +18,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const [costoEnvioReducidoConfig, setCostoEnvioReducidoConfig] = useState(0);
   const [pago, setPago] = useState("efectivo");
   const [cambio, setCambio] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const modalRef = useRef(null);
 
   // TUS DATOS REALES (cambia estos valores)
@@ -132,6 +133,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   };
 
   const confirmarPedido = async () => {
+    if (enviando) return;
     if (!cliente.nombre.trim()) { setAlertaCheckout("Ingresa tu nombre"); modalRef.current.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (entrega === "domicilio" && !cliente.direccion.trim()) { setAlertaCheckout("Ingresa la dirección"); modalRef.current.scrollTo({ top: 0, behavior: 'smooth' }); return; }
 
@@ -151,6 +153,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
     }
 
     try {
+      setEnviando(true);
       const pedido = {
         cliente_nombre: cliente.nombre.trim(),
         cliente_direccion: entrega === "domicilio" ? cliente.direccion.trim() : null,
@@ -238,23 +241,30 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
         { duration: Infinity }
       );
 
-      // Abrir WhatsApp en una nueva pestaña para no perder la tienda
-      const whatsappUrl = `https://wa.me/${TU_NUMERO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
-      const nuevaVentana = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      if (!nuevaVentana || nuevaVentana.closed || typeof nuevaVentana.closed === "undefined") {
-        const enlace = document.createElement("a");
-        enlace.href = whatsappUrl;
-        enlace.target = "_blank";
-        enlace.rel = "noopener noreferrer";
-        document.body.appendChild(enlace);
-        enlace.click();
-        document.body.removeChild(enlace);
-      }
+      // URL de WhatsApp compatible
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${TU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensaje)}`;
+      
+      // Detectar dispositivos móviles (iOS / Android)
+      const esDispositivoMovil = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent || navigator.vendor || window.opera
+      );
 
+      if (esDispositivoMovil) {
+        // En móviles (iOS / Android), usar redirección directa evita que Safari / WebKit bloquee la apertura por pop-up
+        window.location.href = whatsappUrl;
+      } else {
+        // En PC / Escritorio, abrir en pestaña nueva para mantener la tienda abierta
+        const nuevaVentana = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+        if (!nuevaVentana || nuevaVentana.closed || typeof nuevaVentana.closed === "undefined") {
+          window.location.href = whatsappUrl;
+        }
+      }
 
     } catch (err) {
       console.error("Error completo:", err);
       toast.error("Error al procesar el pedido");
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -582,9 +592,12 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
                 <button
                   type="button"
                   onClick={confirmarPedido}
-                  className="py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold shadow-xl hover:shadow-2xl active:scale-98 transition flex items-center justify-center gap-3 cursor-pointer"
+                  disabled={enviando}
+                  className={`py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-green-600 text-white font-bold shadow-xl hover:shadow-2xl active:scale-98 transition flex items-center justify-center gap-3 cursor-pointer ${
+                    enviando ? "opacity-70 cursor-not-allowed" : ""
+                  }`}
                 >
-                  Enviar por WhatsApp
+                  {enviando ? "Enviando..." : "Enviar por WhatsApp"}
                 </button>
               </div>
             </div>
