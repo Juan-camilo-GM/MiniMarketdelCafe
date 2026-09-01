@@ -394,7 +394,7 @@ export default function Catalogo() {
                             <div className="flex items-center bg-gray-100 rounded-lg sm:rounded-xl p-1 shadow-inner">
                               <button
                                 onClick={() => actualizarCantidad(producto.id, cantidad - 1)}
-                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded-md sm:rounded-lg shadow-sm text-purple-700 hover:bg-purple-50 transition-colors"
+                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-white rounded-md sm:rounded-lg shadow-sm text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer"
                               >
                                 <svg className="w-3 h-3 sm:w-4 sm:h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" />
@@ -405,7 +405,7 @@ export default function Catalogo() {
                               </span>
                               <button
                                 onClick={() => agregarAlCarrito(producto)}
-                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-purple-600 rounded-md sm:rounded-lg shadow-md shadow-purple-200 text-white hover:bg-purple-700 transition-transform active:scale-95"
+                                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-purple-600 rounded-md sm:rounded-lg shadow-md shadow-purple-200 text-white hover:bg-purple-700 transition-transform active:scale-95 cursor-pointer"
                               >
                                 <svg className="w-3 h-3 sm:w-4 sm:h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />

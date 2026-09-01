@@ -357,14 +357,14 @@ export default function Productos() {
                     <div className="hidden md:flex absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity gap-2 justify-center bg-gradient-to-t from-black/50 to-transparent pt-8">
                       <button
                         onClick={() => abrirEditar(p)}
-                        className="p-2 bg-white text-slate-700 rounded-full hover:bg-indigo-500 hover:text-white shadow-lg transition-colors"
+                        className="p-2 bg-white text-slate-700 rounded-full hover:bg-indigo-500 hover:text-white shadow-lg transition-colors cursor-pointer"
                         title="Editar"
                       >
                         <IoPencil size={16} />
                       </button>
                       <button
                         onClick={() => setProductoAEliminar(p.id)}
-                        className="p-2 bg-white text-rose-600 rounded-full hover:bg-rose-500 hover:text-white shadow-lg transition-colors"
+                        className="p-2 bg-white text-rose-600 rounded-full hover:bg-rose-500 hover:text-white shadow-lg transition-colors cursor-pointer"
                         title="Eliminar"
                       >
                         <IoTrashBin size={16} />
