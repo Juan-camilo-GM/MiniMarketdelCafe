@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { format } from "date-fns";
+import { formatColombiaDate } from "../../lib/dateUtils";
 import { IoPencil, IoTrashBin, IoEyeOutline, IoCameraOutline, IoSearch } from "react-icons/io5";
 import { IoAlertCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
 
@@ -62,7 +62,7 @@ const FacturaCard = ({ factura, onEdit, onDelete, onView }) => {
         <div>
           <p className="text-xs font-bold text-slate-400 uppercase">Fecha</p>
           <p className="font-medium text-slate-700">
-            {format(new Date(factura.fecha), "dd/MM/yyyy")}
+            {formatColombiaDate(factura.fecha)}
           </p>
         </div>
         <div className="text-right">
@@ -186,7 +186,7 @@ const FacturasProveedor = ({ facturas, onRefresh }) => {
     setFormEditarFactura({
       numero_factura: factura.numero_factura || "",
       monto: factura.monto || "",
-      fecha: factura.fecha ? format(new Date(factura.fecha), "yyyy-MM-dd") : "",
+      fecha: factura.fecha ? formatColombiaDate(factura.fecha, "yyyy-MM-dd") : "",
       descripcion: factura.descripcion || "",
       imagen: null,
       imagen_preview: factura.imagen_url || null,
@@ -529,7 +529,7 @@ const FacturasProveedor = ({ facturas, onRefresh }) => {
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase mb-1">Fecha</p>
                   <p className="font-medium text-slate-800">
-                    {format(new Date(facturaParaVer.fecha), "dd/MM/yyyy")}
+                    {formatColombiaDate(facturaParaVer.fecha)}
                   </p>
                 </div>
 

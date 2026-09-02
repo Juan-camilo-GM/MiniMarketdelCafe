@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { format } from "date-fns";
+import { formatColombiaDate, formatColombiaDateTime } from "../../lib/dateUtils";
 import {
   IoTrashBin, IoCheckmarkCircle,
   IoCloseCircle, IoSearch, IoEyeOutline
@@ -352,7 +352,12 @@ const PedidosProveedor = ({ pedidos, onRefresh }) => {
               <tr key={pedido.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0">
                 <td className="px-6 py-4 font-medium text-slate-900">{pedido.proveedores?.nombre}</td>
                 <td className="px-6 py-4 text-slate-600">
-                  {format(new Date(pedido.created_at), "dd/MM/yyyy")}
+                  <div className="font-medium text-slate-800">
+                    {formatColombiaDate(pedido.created_at)}
+                  </div>
+                  <div className="text-xs text-slate-400">
+                    {formatColombiaDateTime(pedido.created_at, "hh:mm a")}
+                  </div>
                 </td>
                 <td className="px-6 py-4 font-bold text-rose-600">
                   ${parseFloat(pedido.total || 0).toLocaleString("es-CO")}
@@ -443,7 +448,7 @@ const PedidosProveedor = ({ pedidos, onRefresh }) => {
             <div className="p-4 border-b border-slate-50 bg-slate-50/30 flex justify-between items-start">
               <div>
                 <h4 className="font-bold text-slate-800 text-sm mb-1">{pedido.proveedores?.nombre}</h4>
-                <p className="text-xs text-slate-500">{format(new Date(pedido.created_at), "dd/MM/yyyy")}</p>
+                <p className="text-xs text-slate-500">{formatColombiaDateTime(pedido.created_at, "dd/MM/yyyy • hh:mm a")}</p>
               </div>
               <span className={`px-2 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${pedido.estado === "confirmado"
                 ? "bg-emerald-100 text-emerald-700"
@@ -591,7 +596,7 @@ const PedidosProveedor = ({ pedidos, onRefresh }) => {
               <div>
                 <p className="text-xs font-bold text-slate-500 uppercase mb-1">Fecha creación</p>
                 <p className="font-medium text-slate-800">
-                  {format(new Date(viendoPedido.created_at), "dd/MM/yyyy HH:mm")}
+                  {formatColombiaDateTime(viendoPedido.created_at, "dd/MM/yyyy • hh:mm a")}
                 </p>
               </div>
             </div>
@@ -621,7 +626,7 @@ const PedidosProveedor = ({ pedidos, onRefresh }) => {
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase mb-1">Fecha entrega estimada</p>
                   <p className="font-medium text-slate-800">
-                    {format(new Date(viendoPedido.fecha_entrega), "dd/MM/yyyy")}
+                    {formatColombiaDate(viendoPedido.fecha_entrega, "dd/MM/yyyy")}
                   </p>
                 </div>
               )}

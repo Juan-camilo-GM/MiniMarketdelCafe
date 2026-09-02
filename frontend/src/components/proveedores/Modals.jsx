@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { getTodayDateString } from "../../lib/dateUtils";
 import { IoClose, IoCameraOutline, IoSearch } from "react-icons/io5";
 import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
@@ -102,7 +103,7 @@ export const Modals = ({
     proveedor_id: "",
     numero_factura: "",
     monto: "",
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: getTodayDateString(),
     descripcion: "",
     imagen: null,
     imagen_preview: null,
@@ -172,7 +173,8 @@ export const Modals = ({
         monto: parseFloat(formFactura.monto),
         fecha: formFactura.fecha,
         descripcion: formFactura.descripcion || null,
-        imagen_url: imagen_url // Guardar la URL
+        imagen_url: imagen_url, // Guardar la URL
+        created_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
@@ -229,6 +231,7 @@ export const Modals = ({
         total: formPedido.total,
         estado: "pendiente",
         fecha_entrega: formPedido.fecha_entrega || null,
+        created_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
@@ -347,7 +350,7 @@ export const Modals = ({
       proveedor_id: "",
       numero_factura: "",
       monto: "",
-      fecha: new Date().toISOString().split('T')[0],
+      fecha: getTodayDateString(),
       descripcion: "",
       imagen: null,
       imagen_preview: null,

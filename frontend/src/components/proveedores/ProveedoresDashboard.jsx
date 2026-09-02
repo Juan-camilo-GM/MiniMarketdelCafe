@@ -5,14 +5,19 @@ import {
   IoReceiptOutline,
   IoAddCircleOutline,
   IoBusinessOutline,
-  IoCardOutline,
+  IoStatsChartOutline,
+  IoListOutline,
 } from "react-icons/io5";
+
+import GastosDashboard from "./dashboard/GastosDashboard";
 import ProveedoresList from "./ProveedoresList";
 import PedidosProveedor from "./PedidosProveedor";
 import FacturasProveedor from "./FacturasProveedor";
 import { Modals } from "./Modals";
 
 const ProveedoresDashboard = () => {
+  const [subTabActivo, setSubTabActivo] = useState("resumen"); // 'resumen' | 'proveedores' | 'pedidos' | 'facturas'
+
   const [proveedores, setProveedores] = useState([]);
   const [pedidosProveedor, setPedidosProveedor] = useState([]);
   const [facturas, setFacturas] = useState([]);
@@ -68,132 +73,157 @@ const ProveedoresDashboard = () => {
       setProductos(productosData || []);
 
     } catch (error) {
-      console.error("Error cargando datos:", error);
+      console.error("Error cargando datos de proveedores:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Calcular métricas
-  const gastosTotales = pedidosProveedor
-    .filter(p => p.estado === "recibido" || p.estado === "confirmado")
-    .reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0);
-
-  const gastosPendientes = pedidosProveedor
-    .filter(p => p.estado === "pendiente")
-    .reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0);
-
-  const facturasTotales = facturas.reduce((sum, f) => sum + (parseFloat(f.monto) || 0), 0);
-
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-gray-600">Cargando gestión de proveedores...</p>
+      <div className="text-center py-16">
+        <div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-slate-600 font-medium">Cargando gestión de proveedores y gastos...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {/* Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total proveedores</p>
-              <p className="text-3xl font-black text-indigo-600 mt-2 group-hover:scale-105 transition-transform origin-left">{proveedores.length}</p>
-            </div>
-            <div className="p-4 bg-indigo-50 rounded-2xl group-hover:bg-indigo-100 transition-colors">
-              <IoBusinessOutline className="text-3xl text-indigo-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Gastos en pedidos</p>
-              <p className="text-3xl font-black text-rose-600 mt-2 group-hover:scale-105 transition-transform origin-left">
-                ${gastosTotales.toLocaleString("es-CO")}
-              </p>
-              <p className="text-xs font-medium text-slate-400 mt-1">
-                ${gastosPendientes.toLocaleString("es-CO")} pendientes
-              </p>
-            </div>
-            <div className="p-4 bg-rose-50 rounded-2xl group-hover:bg-rose-100 transition-colors">
-              <IoCardOutline className="text-3xl text-rose-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 hover:shadow-md transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total facturado</p>
-              <p className="text-3xl font-black text-purple-600 mt-2 group-hover:scale-105 transition-transform origin-left">
-                ${facturasTotales.toLocaleString("es-CO")}
-              </p>
-              <p className="text-xs font-medium text-slate-400 mt-1">
-                {facturas.length} facturas registradas
-              </p>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-2xl group-hover:bg-purple-100 transition-colors">
-              <IoReceiptOutline className="text-3xl text-purple-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Acciones rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-6">
+      {/* Acciones rápidas superiores */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         <button
           onClick={() => setModalProveedor(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] group"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white p-3.5 md:p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md shadow-indigo-500/20 hover:scale-[1.01] active:scale-[0.98] group"
         >
           <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-            <IoAddCircleOutline size={24} />
+            <IoAddCircleOutline size={22} />
           </div>
-          <span className="font-bold text-lg">Nuevo Proveedor</span>
+          <span className="font-bold text-base md:text-lg">Nuevo Proveedor</span>
         </button>
+
         <button
           onClick={() => setModalPedido(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/30 hover:scale-[1.02] active:scale-[0.98] group"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 md:p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.98] group"
         >
           <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-            <IoStorefrontOutline size={24} />
+            <IoStorefrontOutline size={22} />
           </div>
-          <span className="font-bold text-lg">Nuevo Pedido</span>
+          <span className="font-bold text-base md:text-lg">Nuevo Pedido</span>
         </button>
+
         <button
           onClick={() => setModalFactura(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-purple-500/30 hover:scale-[1.02] active:scale-[0.98] group"
+          className="bg-purple-600 hover:bg-purple-700 text-white p-3.5 md:p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md shadow-purple-500/20 hover:scale-[1.01] active:scale-[0.98] group"
         >
           <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-            <IoReceiptOutline size={24} />
+            <IoReceiptOutline size={22} />
           </div>
-          <span className="font-bold text-lg">Nueva Factura</span>
+          <span className="font-bold text-base md:text-lg">Nueva Factura</span>
         </button>
       </div>
 
-      {/* Componentes separados */}
-      <ProveedoresList
-        proveedores={proveedores}
-        onRefresh={cargarDatos}
-      />
+      {/* Sub-navegación dentro de Proveedores */}
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-1.5 flex flex-wrap gap-1">
+        <button
+          onClick={() => setSubTabActivo("resumen")}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+            subTabActivo === "resumen"
+              ? "bg-rose-50 text-rose-600 shadow-sm border border-rose-100"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+          }`}
+        >
+          <IoStatsChartOutline size={18} />
+          <span>Resumen de Gastos</span>
+        </button>
 
-      <PedidosProveedor
-        pedidos={pedidosProveedor}
-        proveedores={proveedores}
-        productos={productos}
-        onRefresh={cargarDatos}
-      />
+        <button
+          onClick={() => setSubTabActivo("pedidos")}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+            subTabActivo === "pedidos"
+              ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+          }`}
+        >
+          <IoStorefrontOutline size={18} />
+          <span>Pedidos</span>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+            {pedidosProveedor.length}
+          </span>
+        </button>
 
-      <FacturasProveedor
-        facturas={facturas}
-        proveedores={proveedores}
-        onRefresh={cargarDatos}
-      />
+        <button
+          onClick={() => setSubTabActivo("facturas")}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+            subTabActivo === "facturas"
+              ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-100"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+          }`}
+        >
+          <IoReceiptOutline size={18} />
+          <span>Facturas</span>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+            {facturas.length}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setSubTabActivo("proveedores")}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+            subTabActivo === "proveedores"
+              ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100"
+              : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+          }`}
+        >
+          <IoBusinessOutline size={18} />
+          <span>Proveedores</span>
+          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+            {proveedores.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Vista activa según sub-tab */}
+      <div className="transition-all duration-300">
+        {subTabActivo === "resumen" && (
+          <GastosDashboard
+            pedidosProveedor={pedidosProveedor}
+            facturas={facturas}
+            proveedores={proveedores}
+            onRefresh={cargarDatos}
+          />
+        )}
+
+        {subTabActivo === "pedidos" && (
+          <div className="space-y-6">
+            <PedidosProveedor
+              pedidos={pedidosProveedor}
+              proveedores={proveedores}
+              productos={productos}
+              onRefresh={cargarDatos}
+            />
+          </div>
+        )}
+
+        {subTabActivo === "facturas" && (
+          <div className="space-y-6">
+            <FacturasProveedor
+              facturas={facturas}
+              proveedores={proveedores}
+              onRefresh={cargarDatos}
+            />
+          </div>
+        )}
+
+        {subTabActivo === "proveedores" && (
+          <div className="space-y-6">
+            <ProveedoresList
+              proveedores={proveedores}
+              onRefresh={cargarDatos}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Modales */}
       <Modals
