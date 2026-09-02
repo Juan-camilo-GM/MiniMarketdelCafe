@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { IoLogoInstagram, IoLogoFacebook, IoLogoWhatsapp, IoLocation, IoMail, IoCall } from "react-icons/io5";
 
 export default function Footer() {
@@ -43,9 +44,9 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-bold mb-6">Legal</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Términos y Condiciones</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Política de Privacidad</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Política de Devoluciones</a></li>
+                            <li><Link to="/terminos-y-condiciones" className="hover:text-indigo-400 transition-colors">Términos y Condiciones</Link></li>
+                            <li><Link to="/politica-de-privacidad" className="hover:text-indigo-400 transition-colors">Política de Privacidad</Link></li>
+                            <li><Link to="/politica-de-devoluciones" className="hover:text-indigo-400 transition-colors">Política de Devoluciones</Link></li>
                         </ul>
                     </div>
 

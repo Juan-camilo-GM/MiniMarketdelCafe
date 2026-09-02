@@ -4,6 +4,9 @@ import Admin from "./pages/admin/Admin";
 import HistorialPedidos from "./pages/admin/HistorialPedidos";
 import RegistrarVenta from "./pages/admin/RegistrarVenta";
 import Catalogo from "./pages/public/Catalogo";
+import TerminosCondiciones from "./pages/public/TerminosCondiciones";
+import PoliticaPrivacidad from "./pages/public/PoliticaPrivacidad";
+import PoliticaDevoluciones from "./pages/public/PoliticaDevoluciones";
 import AdminLogin from "./pages/admin/AdminLogin";
 import RequireAuth from "./components/RequireAuth";
 import LayoutAdmin from "./layouts/LayoutAdmin";
@@ -34,6 +37,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route element={<LayoutPublic />}>
           <Route path="/" element={<Catalogo />} />
           <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/terminos-y-condiciones" element={<TerminosCondiciones />} />
+          <Route path="/politica-de-privacidad" element={<PoliticaPrivacidad />} />
+          <Route path="/politica-de-devoluciones" element={<PoliticaDevoluciones />} />
           <Route path="/admin/login" element={<AdminLogin />} />
         </Route>
 
