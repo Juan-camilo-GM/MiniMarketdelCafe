@@ -244,20 +244,18 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       // URL de WhatsApp compatible
       const whatsappUrl = `https://api.whatsapp.com/send?phone=${TU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensaje)}`;
       
-      // Detectar dispositivos móviles (iOS / Android)
-      const esDispositivoMovil = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
-        navigator.userAgent || navigator.vendor || window.opera
-      );
+      // Detectar dispositivos móviles (iOS / Android / iPadOS)
+      const esDispositivoMovil =
+        /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent || navigator.vendor || window.opera
+        ) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
 
       if (esDispositivoMovil) {
         // En móviles (iOS / Android), usar redirección directa evita que Safari / WebKit bloquee la apertura por pop-up
         window.location.href = whatsappUrl;
       } else {
-        // En PC / Escritorio, abrir en pestaña nueva para mantener la tienda abierta
-        const nuevaVentana = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-        if (!nuevaVentana || nuevaVentana.closed || typeof nuevaVentana.closed === "undefined") {
-          window.location.href = whatsappUrl;
-        }
+        // En PC / Escritorio, abrir en pestaña nueva manteniendo la página de la tienda intacta
+        window.open(whatsappUrl, "_blank", "noopener,noreferrer");
       }
 
     } catch (err) {
