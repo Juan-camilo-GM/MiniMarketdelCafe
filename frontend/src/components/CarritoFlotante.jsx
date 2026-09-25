@@ -3,8 +3,10 @@ import { IoCart, IoTrashBin, IoClose } from "react-icons/io5";
 import { agregarPedido } from "../lib/productos";
 import { obtenerConfiguracion, subscribeConfiguracion } from "../lib/config";
 import toast from "react-hot-toast";
+import useCartStore from "../store/cartStore";
 
-export default function CarritoFlotante({ carrito, setCarrito }) {
+export default function CarritoFlotante() {
+  const { carrito, actualizarCantidad: actualizarCantidadStore, eliminarProducto, vaciarCarrito: vaciarCarritoStore } = useCartStore();
   const [isOpen, setIsOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [confirmarVaciarOpen, setConfirmarVaciarOpen] = useState(false);
@@ -21,15 +23,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const [enviando, setEnviando] = useState(false);
   const modalRef = useRef(null);
 
-  // TUS DATOS REALES (cambia estos valores)
-  const NEQUI_NUMERO = "3154186754";
-  const DAVIPLATA_NUMERO = "3154186754";
-  const NOMBRE_TITULAR = "Johana González";
-  const TU_NUMERO_WHATSAPP = "573117863431";
 
-  useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(carrito));
-  }, [carrito]);
 
   const total = carrito.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
 
@@ -46,16 +40,32 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
   const totalFinal = total + costoEnvio;
 
 
+  const [whatsappConfig, setWhatsappConfig] = useState("573117863431");
+  const [nequiConfig, setNequiConfig] = useState("3154186754");
+  const [daviplataConfig, setDaviplataConfig] = useState("3154186754");
+  const [titularConfig, setTitularConfig] = useState("Johana González");
+
   useEffect(() => {
     let isMounted = true;
     async function cargarConfig() {
       const valEnvio = await obtenerConfiguracion("costo_envio");
       const valMinimo = await obtenerConfiguracion("envio_gratis_minimo");
       const valReducido = await obtenerConfiguracion("costo_envio_reducido");
+      
+      const valWhatsapp = await obtenerConfiguracion("whatsapp_numero");
+      const valNequi = await obtenerConfiguracion("nequi_numero");
+      const valDaviplata = await obtenerConfiguracion("daviplata_numero");
+      const valTitular = await obtenerConfiguracion("nombre_titular");
+
       if (!isMounted) return;
       if (valEnvio !== null) setCostoEnvioConfig(Number(valEnvio));
       if (valMinimo !== null) setMinimoGratisConfig(Number(valMinimo));
       if (valReducido !== null) setCostoEnvioReducidoConfig(Number(valReducido));
+
+      if (valWhatsapp !== null) setWhatsappConfig(valWhatsapp);
+      if (valNequi !== null) setNequiConfig(valNequi);
+      if (valDaviplata !== null) setDaviplataConfig(valDaviplata);
+      if (valTitular !== null) setTitularConfig(valTitular);
     }
     cargarConfig();
 
@@ -101,10 +111,6 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
     setCheckoutOpen(false);
   };
 
-  const eliminarProducto = (id) => {
-    setCarrito((prev) => prev.filter((p) => p.id !== id));
-  };
-
   const actualizarCantidad = (id, nuevaCantidad) => {
     // Si la cantidad es 0, ofrecer eliminar o eliminar directo
     if (nuevaCantidad === 0) {
@@ -120,14 +126,11 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
       return;
     }
 
-    setCarrito((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, cantidad: nuevaCantidad } : p))
-    );
+    actualizarCantidadStore(id, nuevaCantidad, carrito);
   };
 
   const vaciarCarrito = () => {
-    setCarrito([]);
-    localStorage.removeItem("carrito");
+    vaciarCarritoStore();
     setConfirmarVaciarOpen(false);
     toast.success("Carrito vaciado");
   };
@@ -182,8 +185,8 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
             ? `Efectivo\nPago con: $${Number(cambio).toLocaleString("es-CO")} (para cambio)`
             : "Efectivo"
           : pago === "nequi"
-            ? `Transferencia Nequi\nNúmero: ${NEQUI_NUMERO}\nTitular: ${NOMBRE_TITULAR}`
-            : `Transferencia Daviplata\nNúmero: ${DAVIPLATA_NUMERO}\nTitular: ${NOMBRE_TITULAR}`
+            ? `Transferencia Nequi\nNúmero: ${nequiConfig}\nTitular: ${titularConfig}`
+            : `Transferencia Daviplata\nNúmero: ${daviplataConfig}\nTitular: ${titularConfig}`
         }
 
     *Productos:*
@@ -202,8 +205,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
         }`;
 
       // Limpiar todo
-      setCarrito([]);
-      localStorage.removeItem("carrito");
+      vaciarCarritoStore();
       setCheckoutOpen(false);
       setIsOpen(false);
 
@@ -241,8 +243,7 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
         { duration: Infinity }
       );
 
-      // URL de WhatsApp compatible
-      const whatsappUrl = `https://api.whatsapp.com/send?phone=${TU_NUMERO_WHATSAPP}&text=${encodeURIComponent(mensaje)}`;
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappConfig}&text=${encodeURIComponent(mensaje)}`;
       
       // Detectar dispositivos móviles (iOS / Android / iPadOS)
       const esDispositivoMovil =
@@ -507,34 +508,58 @@ export default function CarritoFlotante({ carrito, setCarrito }) {
 
                   <div
                     onClick={() => setPago("nequi")}
-                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "nequi" ? "border-purple-600 bg-purple-50 shadow-md" : "border-gray-300"
+                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "nequi" ? "border-purple-600 bg-purple-50 shadow-md" : "border-gray-300"
                       }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-6 h-6 rounded-full border-2 border-purple-600 flex items-center justify-center">
                         {pago === "nequi" && <div className="w-3 h-3 bg-purple-600 rounded-full" />}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-bold text-purple-700">Nequi</p>
-                        <p className="text-sm"><strong>{NEQUI_NUMERO}</strong> – {NOMBRE_TITULAR}</p>
+                        <p className="text-sm"><strong>{nequiConfig}</strong> – {titularConfig}</p>
                       </div>
                     </div>
+                    {pago === "nequi" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(nequiConfig);
+                          toast.success("Número Nequi copiado");
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white border border-purple-200 text-purple-700 text-xs font-bold px-3 py-2 rounded-lg shadow-sm hover:bg-purple-100 transition-colors"
+                      >
+                        COPIAR
+                      </button>
+                    )}
                   </div>
 
                   <div
                     onClick={() => setPago("daviplata")}
-                    className={`p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "daviplata" ? "border-green-600 bg-green-50 shadow-md" : "border-gray-300"
+                    className={`relative p-5 rounded-2xl border-2 cursor-pointer transition-all ${pago === "daviplata" ? "border-green-600 bg-green-50 shadow-md" : "border-gray-300"
                       }`}
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-6 h-6 rounded-full border-2 border-green-600 flex items-center justify-center">
                         {pago === "daviplata" && <div className="w-3 h-3 bg-green-600 rounded-full" />}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-bold text-green-700">Daviplata</p>
-                        <p className="text-sm"><strong>{DAVIPLATA_NUMERO}</strong> – {NOMBRE_TITULAR}</p>
+                        <p className="text-sm"><strong>{daviplataConfig}</strong> – {titularConfig}</p>
                       </div>
                     </div>
+                    {pago === "daviplata" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(daviplataConfig);
+                          toast.success("Número Daviplata copiado");
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white border border-green-200 text-green-700 text-xs font-bold px-3 py-2 rounded-lg shadow-sm hover:bg-green-100 transition-colors"
+                      >
+                        COPIAR
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

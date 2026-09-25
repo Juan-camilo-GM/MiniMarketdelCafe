@@ -5,6 +5,8 @@ import Navbar from "../components/Navbar";
 import BannerTiendaCerrada from "../components/BannerTiendaCerrada";
 import Footer from "../components/Footer";
 
+import Megafono from "../components/Megafono";
+
 const RUTAS_SIN_NAVBAR = [
   "/terminos-y-condiciones",
   "/politica-de-privacidad",
@@ -22,7 +24,8 @@ export default function LayoutPublic() {
   return (
     <BannerTiendaCerrada>
       {!esRutaSinNavbar && <Navbar />}
-      <div className={`${esRutaSinNavbar ? "" : "pt-32 md:pt-24"} pb-12 w-full min-h-[calc(100vh-300px)]`}>
+      <div className={`${esRutaSinNavbar ? "" : "pt-[130px] md:pt-[90px]"} pb-12 w-full min-h-[calc(100vh-300px)]`}>
+        {!esRutaSinNavbar && <Megafono />}
         <Outlet />
       </div>
       <Footer />

@@ -9,7 +9,7 @@ import { IoAlertCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { Modal } from "./Modals";
 
-const PedidosProveedor = ({ pedidos, onRefresh }) => {
+const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
   const [viendoPedido, setViendoPedido] = useState(null);
   const [pedidoAEliminar, setPedidoAEliminar] = useState(null);
   const [pedidoACambiarEstado, setPedidoACambiarEstado] = useState(null);
@@ -282,16 +282,30 @@ const PedidosProveedor = ({ pedidos, onRefresh }) => {
       {/* Encabezado con filtros y paginación */}
       <div className="p-6 border-b border-slate-100 bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800">
-              Pedidos a proveedores ({pedidosFiltrados.length})
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Gestiona tus pedidos y recepciones
-            </p>
+          <div className="flex justify-between items-center w-full md:w-auto gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">
+                Pedidos a proveedores ({pedidosFiltrados.length})
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Gestiona tus pedidos y recepciones
+              </p>
+            </div>
+            <button
+              onClick={onNuevoPedido}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/20 md:hidden"
+            >
+              Nuevo
+            </button>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <button
+              onClick={onNuevoPedido}
+              className="hidden md:flex bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl items-center justify-center gap-2 transition-all shadow-md shadow-emerald-500/20 font-semibold"
+            >
+              Nuevo Pedido
+            </button>
             {/* Selector de items por página */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500 font-medium">Mostrar:</span>

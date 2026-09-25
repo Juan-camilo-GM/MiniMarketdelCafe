@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { IoMenu, IoClose, IoLogOut, IoCart, IoGrid, IoTime, IoSearch, IoChevronForward } from "react-icons/io5";
+import { IoMenu, IoClose, IoLogOut, IoCart, IoGrid, IoTime, IoSearch, IoChevronForward, IoSettingsOutline } from "react-icons/io5";
 import { obtenerCategorias } from "../lib/categorias";
 import BotonCerrarTienda from "../pages/admin/BotonCerrarTienda";
 
@@ -76,18 +76,10 @@ export default function Navbar() {
     { to: "/", label: "Catálogo", icon: <IoGrid className="text-xl" /> },
   ];
 
-  // VISTA ADMIN
-  const adminLinks = [
-    { to: "/admin", label: "Productos", icon: <IoGrid className="text-xl" /> },
-    { to: "/admin/venta", label: "Nueva Venta", icon: <IoCart className="text-xl" /> },
-    { to: "/admin/historial", label: "Dashboard", icon: <IoTime className="text-xl" /> },
-  ];
-
-  const links = pathname.startsWith("/admin") && isAdminLogged ? adminLinks : clientLinks;
-  const isAdminRoute = pathname.startsWith("/admin") && isAdminLogged;
+  const links = clientLinks;
   const isLoginRoute = pathname === "/admin/login";
 
-  const showSearch = !isAdminRoute && !isLoginRoute;
+  const showSearch = !isLoginRoute;
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-800 shadow-2xl transition-all duration-300 ${scrolled ? 'py-4' : 'py-4 sm:py-6'}`}>
@@ -107,7 +99,7 @@ export default function Navbar() {
                   Mini Market
                 </h1>
                 <span className="text-indigo-200 text-sm">del Café</span>
-                {isAdminRoute && (
+                {isAdminLogged && (
                   <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-white/20 text-white border border-white/30 hidden sm:inline-block">
                     ADMIN
                   </span>
@@ -169,20 +161,17 @@ export default function Navbar() {
                   );
                 })}
 
-                {/* Opciones extra solo para Admin */}
-                {isAdminRoute && (
+                {/* Opciones extra si es Admin */}
+                {isAdminLogged && (
                   <>
-                    <li className="ml-4 pl-4 border-l border-white/20 flex items-center gap-3">
-                      <BotonCerrarTienda />
-                    </li>
                     <li>
-                      <button
-                        onClick={() => supabase.auth.signOut()}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/15 font-medium transition-all duration-200 border border-white/20"
+                      <Link
+                        to="/admin/dashboard"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-white/20 text-white hover:bg-white/30 transition-all duration-200 border border-white/30"
                       >
-                        <IoLogOut className="text-lg" />
-                        Salir
-                      </button>
+                        <IoSettingsOutline className="text-xl" />
+                        Ir al Admin
+                      </Link>
                     </li>
                   </>
                 )}
@@ -244,36 +233,21 @@ export default function Navbar() {
         {/* List */}
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-6 scrollbar-hide">
           {/* Main Navigation */}
-          {isAdminRoute && (
+          {isAdminLogged && (
             <nav className="space-y-2 pb-6 border-b border-white/10">
-              {links.filter(l => l.label !== "Catálogo").map(link => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="flex items-center gap-4 px-4 py-3 text-white hover:bg-white/10 rounded-xl font-bold transition-all text-lg"
-                >
-                  {link.icon}
-                  {link.label}
-                </Link>
-              ))}
-
-              {/* Botón de Cerrar/Abrir Tienda */}
-              <BotonCerrarTienda variant="sidebar" />
-
-              <button
-                onClick={() => { supabase.auth.signOut(); setIsSidebarOpen(false); }}
-                className="w-full flex items-center gap-4 px-4 py-3 text-white hover:bg-white/10 rounded-xl font-medium transition-all text-base border border-white/20"
+              <Link
+                to="/admin/dashboard"
+                onClick={() => setIsSidebarOpen(false)}
+                className="flex items-center gap-4 px-4 py-3 text-white hover:bg-white/10 rounded-xl font-bold transition-all text-lg border border-white/20"
               >
-                <IoLogOut className="text-xl" />
-                Cerrar Sesión
-              </button>
+                <IoSettingsOutline className="text-xl" />
+                Ir al Panel Admin
+              </Link>
             </nav>
           )}
 
           {/* Categories Section - Solo en vista pública */}
-          {!isAdminRoute && (
-            <div className="space-y-2">
+          <div className="space-y-2">
               <div className="flex items-center justify-between px-4 mb-2">
                 <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Catálogo</span>
                 <Link to="/catalogo" onClick={() => setIsSidebarOpen(false)} className="text-xs text-white/80 hover:text-white underline">Ver todo</Link>
@@ -299,7 +273,6 @@ export default function Navbar() {
                 })}
               </div>
             </div>
-          )}
         </div>
       </div>
     </nav>

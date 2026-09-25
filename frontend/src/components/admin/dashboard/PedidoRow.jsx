@@ -49,7 +49,7 @@ export default function PedidoRow({ pedido, onEstadoChange, onEliminar }) {
                     </span>
                 </td>
                 <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-2">
+                    <div className="flex justify-end gap-2">
                         {pedido.estado !== "confirmado" && (
                             <button
                                 onClick={() => onEstadoChange(pedido.id, "confirmado")}

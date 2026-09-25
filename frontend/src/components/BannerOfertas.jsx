@@ -25,7 +25,7 @@ export default function BannerOfertas({ productos, agregarAlCarrito }) {
     if (!productoActual) return null;
 
     return (
-        <div className="w-full px-4 md:px-8 lg:px-12 pt-20 md:pt-24 mb-4">
+        <div className="w-full px-4 md:px-8 lg:px-12 mb-4">
             <div className="relative w-full bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl overflow-hidden shadow-lg shadow-indigo-500/20 text-white group">
 
                 {/* === DECORACIÓN DE FONDO (Sutil) === */}

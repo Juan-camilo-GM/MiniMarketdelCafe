@@ -1,8 +1,12 @@
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Admin from "./pages/admin/Admin";
-import HistorialPedidos from "./pages/admin/HistorialPedidos";
+import Dashboard from "./pages/admin/Dashboard";
+import Pedidos from "./pages/admin/Pedidos";
+import Proveedores from "./pages/admin/Proveedores";
 import RegistrarVenta from "./pages/admin/RegistrarVenta";
+import CierreCaja from "./pages/admin/CierreCaja";
+import Fiados from "./pages/admin/Fiados";
 import Catalogo from "./pages/public/Catalogo";
 import TerminosCondiciones from "./pages/public/TerminosCondiciones";
 import PoliticaPrivacidad from "./pages/public/PoliticaPrivacidad";
@@ -17,6 +21,8 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
 import { IoCheckmarkCircle } from "react-icons/io5";
+
+import Configuracion from "./pages/admin/Configuracion";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
@@ -52,8 +58,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           }
         >
           <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/historial" element={<HistorialPedidos />} />
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/pedidos" element={<Pedidos />} />
+          <Route path="/admin/proveedores" element={<Proveedores />} />
           <Route path="/admin/venta" element={<RegistrarVenta />} />
+          <Route path="/admin/cierre" element={<CierreCaja />} />
+          <Route path="/admin/fiados" element={<Fiados />} />
+          <Route path="/admin/configuracion" element={<Configuracion />} />
         </Route>
       </Routes>
     </AuthProvider>

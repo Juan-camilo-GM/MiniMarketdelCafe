@@ -90,38 +90,6 @@ const ProveedoresDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Acciones rápidas superiores */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <button
-          onClick={() => setModalProveedor(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white p-3.5 md:p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md shadow-indigo-500/20 hover:scale-[1.01] active:scale-[0.98] group"
-        >
-          <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-            <IoAddCircleOutline size={22} />
-          </div>
-          <span className="font-bold text-base md:text-lg">Nuevo Proveedor</span>
-        </button>
-
-        <button
-          onClick={() => setModalPedido(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 md:p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md shadow-emerald-500/20 hover:scale-[1.01] active:scale-[0.98] group"
-        >
-          <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-            <IoStorefrontOutline size={22} />
-          </div>
-          <span className="font-bold text-base md:text-lg">Nuevo Pedido</span>
-        </button>
-
-        <button
-          onClick={() => setModalFactura(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-3.5 md:p-4 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-md shadow-purple-500/20 hover:scale-[1.01] active:scale-[0.98] group"
-        >
-          <div className="p-2 bg-white/20 rounded-xl group-hover:bg-white/30 transition-colors">
-            <IoReceiptOutline size={22} />
-          </div>
-          <span className="font-bold text-base md:text-lg">Nueva Factura</span>
-        </button>
-      </div>
 
       {/* Sub-navegación dentro de Proveedores */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-1.5 flex flex-wrap gap-1">
@@ -201,6 +169,7 @@ const ProveedoresDashboard = () => {
               proveedores={proveedores}
               productos={productos}
               onRefresh={cargarDatos}
+              onNuevoPedido={() => setModalPedido(true)}
             />
           </div>
         )}
@@ -211,6 +180,7 @@ const ProveedoresDashboard = () => {
               facturas={facturas}
               proveedores={proveedores}
               onRefresh={cargarDatos}
+              onNuevaFactura={() => setModalFactura(true)}
             />
           </div>
         )}
@@ -220,6 +190,7 @@ const ProveedoresDashboard = () => {
             <ProveedoresList
               proveedores={proveedores}
               onRefresh={cargarDatos}
+              onNuevoProveedor={() => setModalProveedor(true)}
             />
           </div>
         )}

@@ -4,7 +4,7 @@ import { IoPencil, IoTrashBin, IoSearch, IoClose } from "react-icons/io5";
 import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrashOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 
-export default function ProveedoresList({ proveedores, onRefresh }) {
+export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveedor }) {
   const [editandoProveedor, setEditandoProveedor] = useState(null);
   const [busquedaProveedor, setBusquedaProveedor] = useState("");
 
@@ -233,16 +233,30 @@ export default function ProveedoresList({ proveedores, onRefresh }) {
       {/* Encabezado con buscador y paginación */}
       <div className="p-6 border-b border-slate-100 bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800">
-              Proveedores ({proveedoresFiltrados.length})
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Gestiona tus proveedores y contactos
-            </p>
+          <div className="flex justify-between items-center w-full md:w-auto gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">
+                Proveedores ({proveedoresFiltrados.length})
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Gestiona tus proveedores y contactos
+              </p>
+            </div>
+            <button
+              onClick={onNuevoProveedor}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-500/20 md:hidden"
+            >
+              Nuevo
+            </button>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <button
+              onClick={onNuevoProveedor}
+              className="hidden md:flex bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl items-center justify-center gap-2 transition-all shadow-md shadow-indigo-500/20 font-semibold"
+            >
+              Nuevo Proveedor
+            </button>
             {/* Selector de items por página */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500 font-medium">Mostrar:</span>

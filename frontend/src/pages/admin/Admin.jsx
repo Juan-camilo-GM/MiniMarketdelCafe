@@ -233,8 +233,8 @@ export default function Productos() {
     <div className="min-h-screen bg-slate-50 pb-20">
 
       {/* HEADER & STATS */}
-      <div className="bg-slate-50 sticky top-[60px] lg:top-[70px] z-30 pt-4 lg:pt-0">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+      <div className="bg-slate-50 sticky top-[64px] lg:top-0 z-30 pt-4 lg:pt-0 pb-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
             <div>
               <h1 className="text-xl md:text-3xl font-bold text-slate-900 flex items-center gap-2">

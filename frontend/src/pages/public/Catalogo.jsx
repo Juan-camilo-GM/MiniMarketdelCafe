@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { IoAlertCircleOutline, IoSearch } from "react-icons/io5";
 
 import BannerOfertas from "../../components/BannerOfertas";
+import useCartStore from "../../store/cartStore";
 
 // Componente de Skeleton para tarjetas de producto
 function ProductoSkeleton() {
@@ -36,31 +37,8 @@ export default function Catalogo() {
   const [searchParams, setSearchParams] = useSearchParams();
   const busqueda = searchParams.get("q") || "";
   const categoriaUrl = searchParams.get("categoria") || "";
-  const [carrito, setCarrito] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("carrito");
-        if (!saved) return [];
-        const parsed = JSON.parse(saved);
-        if (!Array.isArray(parsed)) return [];
-        // Normalizar y validar items para evitar datos corruptos en localStorage
-        return parsed
-          .map((p) => ({
-            id: p?.id ?? null,
-            nombre: p?.nombre ?? p?.title ?? "",
-            precio: Number(p?.precio ?? p?.price ?? 0) || 0,
-            cantidad: Number(p?.cantidad ?? p?.qty ?? 1) || 1,
-            imagen_url: p?.imagen_url ?? p?.image_url ?? null,
-            stock: Number(p?.stock ?? 0) || 0,
-          }))
-          .filter((p) => p.id !== null && p.nombre !== "");
-      } catch (error) {
-        console.error("Error al cargar carrito:", error);
-        return [];
-      }
-    }
-    return [];
-  });
+
+  const { carrito } = useCartStore();
   const [cargando, setCargando] = useState(true);
 
   // Estados para paginación infinita
@@ -110,11 +88,13 @@ export default function Catalogo() {
   }, [carrito]);
 
   const productosFiltrados = useMemo(() => {
-    return productos.filter(p => {
+    let filtrados = productos.filter(p => {
       const coincideTexto = p.nombre.toLowerCase().includes(busqueda.toLowerCase());
       const coincideCategoria = categoriaUrl === "" || p.categoria_id === Number(categoriaUrl);
       return coincideTexto && coincideCategoria;
     });
+
+    return filtrados;
   }, [productos, busqueda, categoriaUrl]);
 
   // Productos visibles según la página actual
@@ -161,103 +141,38 @@ export default function Catalogo() {
     if (window.navigator && window.navigator.vibrate) {
       window.navigator.vibrate(50);
     }
-
-    const existe = carrito.find((p) => p.id === producto.id);
-
-    if (existe) {
-      if (existe.cantidad + 1 > producto.stock) {
-        toast.error(
-          `Stock insuficiente para "${producto.nombre}"`,
-          {
+    const result = useCartStore.getState().agregarProducto(producto);
+    if (result) {
+      if (result.error) {
+         toast.error(result.error, {
             icon: <IoAlertCircleOutline size={22} />,
             duration: 4000,
-            id: `stock-${producto.id}`, // 🔽 CAMBIO AQUÍ
-          }
-        );
-        return;
+            id: `stock-${result.id}`,
+         });
+      } else if (result.success) {
+         toast.success(result.success, {
+            duration: 3000,
+            id: `add-${result.id}`,
+         });
       }
-
-      setCarrito((prev) =>
-        prev.map((p) =>
-          p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
-        )
-      );
-
-      toast.success(
-        `"${producto.nombre}" +1 agregado al carrito`,
-        {
-          duration: 3000,
-          id: `add-${producto.id}`, // 🔽 CAMBIO AQUÍ
-        }
-      );
-    } else {
-      if (producto.stock < 1) {
-        toast.error(
-          `No hay stock disponible de "${producto.nombre}"`,
-          {
-            icon: <IoAlertCircleOutline size={22} />,
-            duration: 4000,
-            id: `nostock-${producto.id}`, // 🔽 CAMBIO AQUÍ
-          }
-        );
-        return;
-      }
-
-      setCarrito((prev) => [...prev, { ...producto, cantidad: 1 }]);
-
-      toast.success(
-        `"${producto.nombre}" agregado al carrito`,
-        {
-          duration: 3000,
-          id: `add-${producto.id}`, // 🔽 CAMBIO AQUÍ
-        }
-      );
     }
   };
 
-
   const actualizarCantidad = (productoId, nuevaCantidad) => {
-    if (nuevaCantidad <= 0) {
-      setCarrito((prev) => prev.filter((p) => p.id !== productoId));
-
-      toast.success(
-        "Producto eliminado del carrito",
-        {
-          duration: 3000,
-          id: `remove-${productoId}`, // 🔽 CAMBIO AQUÍ
-        }
-      );
-    } else {
-      const productoEnCarrito = carrito.find((p) => p.id === productoId);
-      const productoOriginal = productos.find((p) => p.id === productoId);
-
-      if (productoEnCarrito && productoOriginal) {
-        if (nuevaCantidad > productoOriginal.stock) {
-          toast.error(
-            `Stock insuficiente para "${productoOriginal.nombre}"`,
-            {
-              icon: <IoAlertCircleOutline size={22} />,
-              duration: 4000,
-              id: `stock-${productoId}`, // 🔽 CAMBIO AQUÍ
-            }
-          );
-          return;
-        }
-
-        setCarrito((prev) =>
-          prev.map((p) =>
-            p.id === productoId ? { ...p, cantidad: nuevaCantidad } : p
-          )
-        );
-
-        toast.success(
-          `Cantidad de "${productoOriginal.nombre}" actualizada`,
-          {
+    const result = useCartStore.getState().actualizarCantidad(productoId, nuevaCantidad, productos);
+    if (result) {
+       if (result.error) {
+         toast.error(result.error, {
+            icon: <IoAlertCircleOutline size={22} />,
+            duration: 4000,
+            id: `stock-${result.id}`,
+         });
+       } else if (result.success) {
+         toast.success(result.success, {
             duration: 3000,
-            id: `update-${productoId}`, // 🔽 CAMBIO AQUÍ
-          }
-        );
-      }
+            id: nuevaCantidad === 0 ? `remove-${result.id}` : `update-${result.id}`,
+         });
+       }
     }
   };
 
@@ -265,34 +180,39 @@ export default function Catalogo() {
   return (
     <div className="bg-gray-50/50 min-h-screen pb-20">
 
-      {/* Breadcrumb / Minimalist Header */}
-      {categoriaUrl && catMap[categoriaUrl] && (
-        <div className="pt-2 md:pt-0 px-4 md:px-8 lg:px-12 pb-2">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Catálogo</span>
-            <span className="text-gray-300">/</span>
-            <span className="font-bold text-gray-900">{catMap[categoriaUrl]}</span>
-
-            <button
-              onClick={() => {
-                const newParams = new URLSearchParams(searchParams);
-                newParams.delete("categoria");
-                setSearchParams(newParams);
-              }}
-              className="ml-2 text-red-500 hover:text-red-700 text-xs font-medium hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              (Limpiar)
-            </button>
-          </div>
+      {/* Breadcrumb y Filtros */}
+      <div className="pt-2 md:pt-0 px-4 md:px-8 lg:px-12 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          {categoriaUrl && catMap[categoriaUrl] ? (
+            <>
+              <span>Catálogo</span>
+              <span className="text-gray-300">/</span>
+              <span className="font-bold text-gray-900">{catMap[categoriaUrl]}</span>
+              <button
+                onClick={() => {
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.delete("categoria");
+                  setSearchParams(newParams);
+                }}
+                className="ml-2 text-red-500 hover:text-red-700 text-xs font-medium hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                (Limpiar)
+              </button>
+            </>
+          ) : (
+            <span className="font-bold text-gray-900">Todos los productos</span>
+          )}
         </div>
-      )}
+
+
+      </div>
 
       {/* Contenedor del Grid de Productos (Fluid Width) */}
       <div id="catalogo" className={`w-full px-4 md:px-8 lg:px-12 ${categoriaUrl ? 'pt-4' : 'pt-4'}`}>
 
         {/* Banner de Ofertas (Solo si no hay categoría seleccionada ni búsqueda y no está cargando) */}
         {!cargando && !categoriaUrl && !busqueda && productos.some(p => p.is_featured) && (
-          <div className="-mt-16 md:-mt-20 mb-8">
+          <div className="mb-8">
             <BannerOfertas productos={productos} agregarAlCarrito={agregarAlCarrito} />
           </div>
         )}
@@ -312,6 +232,7 @@ export default function Catalogo() {
                   const cantidad = enCarrito ? enCarrito.cantidad : 0;
                   const estaAgotado = producto.stock === 0;
                   const pocoStock = producto.stock > 0 && producto.stock <= 5;
+                  const esCombo = producto.nombre.toLowerCase().startsWith('combo') || producto.nombre.toLowerCase().startsWith('kit');
 
                   return (
                     <article
@@ -319,7 +240,9 @@ export default function Catalogo() {
                       className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-400 flex flex-col h-full
                         ${estaAgotado
                           ? "opacity-65 grayscale"
-                          : "shadow-md hover:shadow-xl hover:-translate-y-1 ring-1 ring-gray-100"
+                          : esCombo
+                            ? "shadow-md hover:shadow-xl hover:-translate-y-1 ring-2 ring-rose-400 shadow-rose-500/20"
+                            : "shadow-md hover:shadow-xl hover:-translate-y-1 ring-1 ring-gray-100"
                         }`}
                     >
                       {/* Imagen */}
@@ -334,6 +257,13 @@ export default function Catalogo() {
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300">
                             <span className="text-4xl">☕</span>
+                          </div>
+                        )}
+
+                        {/* Badge Combo */}
+                        {esCombo && (
+                          <div className="absolute top-2 right-2 bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-full shadow-lg z-10 animate-bounce">
+                            🎁 COMBO
                           </div>
                         )}
 
@@ -469,7 +399,7 @@ export default function Catalogo() {
         )}
       </div>
 
-      <CarritoFlotante carrito={carrito} setCarrito={setCarrito} />
+      <CarritoFlotante />
     </div>
   );
 }

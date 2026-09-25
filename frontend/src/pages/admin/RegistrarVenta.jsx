@@ -97,15 +97,23 @@ export default function RegistrarVenta() {
         cargarDatos();
     }, []);
 
+    const [vecinosFiados, setVecinosFiados] = useState([]);
+
     const cargarDatos = async () => {
         setLoading(true);
         try {
-            const [prods, cats] = await Promise.all([
+            const [prods, cats, fiadosResult] = await Promise.all([
                 obtenerProductos(),
-                obtenerCategorias()
+                obtenerCategorias(),
+                supabase.from("pedidos").select("cliente_nombre").eq("metodo_pago", "fiado").eq("estado", "confirmado")
             ]);
             setProductos(prods);
             setCategorias(cats);
+
+            if (fiadosResult.data) {
+                const nombres = fiadosResult.data.map(d => d.cliente_nombre).filter(Boolean);
+                setVecinosFiados([...new Set(nombres)]);
+            }
         } catch (error) {
             console.error("Error cargando datos:", error);
             toast.error("Error al cargar productos");
@@ -288,16 +296,33 @@ export default function RegistrarVenta() {
                 throw new Error("Carrito vacío o con datos inválidos.");
             }
 
-            // 1. Verificar stock nuevamente
-            for (const item of sanitizedCarrito) {
-                const { data: prodActual } = await supabase
-                    .from("productos")
-                    .select("stock")
-                    .eq("id", item.id)
-                    .single();
+            // 0.5 Validar fiado
+            if (metodoPago === "fiado" && !clienteNombre.trim()) {
+                toast.error("Para fiar debes ingresar el nombre del vecino.");
+                setProcesando(false);
+                return;
+            }
 
-                if (!prodActual || prodActual.stock < item.cantidad) {
-                    throw new Error(`Stock insuficiente para ${item.nombre}`);
+            // 1. Verificar stock nuevamente (Solo si hay internet)
+            if (navigator.onLine) {
+                for (const item of sanitizedCarrito) {
+                    const { data: prodActual } = await supabase
+                        .from("productos")
+                        .select("stock")
+                        .eq("id", item.id)
+                        .single();
+
+                    if (!prodActual || prodActual.stock < item.cantidad) {
+                        throw new Error(`Stock insuficiente para ${item.nombre}`);
+                    }
+                }
+            } else {
+                // Validación offline basada en el estado actual de react
+                for (const item of sanitizedCarrito) {
+                    const prodActual = productos.find(p => p.id === item.id);
+                    if (!prodActual || prodActual.stock < item.cantidad) {
+                        throw new Error(`Stock insuficiente para ${item.nombre} (Verificado Offline)`);
+                    }
                 }
             }
 
@@ -321,27 +346,45 @@ export default function RegistrarVenta() {
                 created_at: new Date().toISOString()
             };
 
-            const { error: errorPedido } = await supabase
-                .from("pedidos")
-                .insert(pedido);
+            if (!navigator.onLine) {
+                // MODO OFFLINE: Guardar localmente
+                const offlineSales = JSON.parse(localStorage.getItem("ventas_offline") || "[]");
+                offlineSales.push(pedido);
+                localStorage.setItem("ventas_offline", JSON.stringify(offlineSales));
+                
+                // Actualizar stock de UI localmente
+                setProductos(prev => prev.map(p => {
+                    const itemComprado = sanitizedCarrito.find(it => it.id === p.id);
+                    if (itemComprado) return { ...p, stock: p.stock - itemComprado.cantidad };
+                    return p;
+                }));
 
-            if (errorPedido) throw errorPedido;
+                toast.success("Venta guardada (Modo Offline). Se sincronizará automáticamente al volver el internet.");
+                window.dispatchEvent(new Event("ventas_offline_updated"));
+            } else {
+                // MODO ONLINE: Guardar en Supabase
+                const { error: errorPedido } = await supabase
+                    .from("pedidos")
+                    .insert(pedido);
 
-            // 3. Actualizar stock
-            for (const item of sanitizedCarrito) {
-                const { data: prod } = await supabase
-                    .from("productos")
-                    .select("stock")
-                    .eq("id", item.id)
-                    .single();
+                if (errorPedido) throw errorPedido;
 
-                await supabase
-                    .from("productos")
-                    .update({ stock: prod.stock - item.cantidad })
-                    .eq("id", item.id);
+                // 3. Actualizar stock
+                for (const item of sanitizedCarrito) {
+                    const { data: prod } = await supabase
+                        .from("productos")
+                        .select("stock")
+                        .eq("id", item.id)
+                        .single();
+
+                    await supabase
+                        .from("productos")
+                        .update({ stock: prod.stock - item.cantidad })
+                        .eq("id", item.id);
+                }
+                
+                toast.success("Venta registrada correctamente");
             }
-
-            toast.success("Venta registrada correctamente");
             setCarrito([]);
             setClienteNombre("");
             setMetodoPago("efectivo");
@@ -361,7 +404,7 @@ export default function RegistrarVenta() {
     };
 
     return (
-        <div className="bg-slate-100 flex flex-col lg:flex-row absolute inset-0 top-16 lg:top-20 overflow-hidden select-none">
+        <div className="bg-slate-100 flex flex-col lg:flex-row relative h-[calc(100vh-6rem)] lg:h-[calc(100vh-5rem)] w-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm select-none">
             
             {/* =========================================================================
                 SECCIÓN IZQUIERDA: CATÁLOGO DE PRODUCTOS (ADAPTABLE)
@@ -491,6 +534,7 @@ export default function RegistrarVenta() {
                                     const sinStock = producto.stock <= 0;
                                     const pocoStock = producto.stock > 0 && producto.stock <= 5;
                                     const enCarrito = carrito.find(item => item.id === producto.id);
+                                    const esCombo = producto.nombre.toLowerCase().startsWith('combo') || producto.nombre.toLowerCase().startsWith('kit');
 
                                     return (
                                         <div
@@ -499,13 +543,23 @@ export default function RegistrarVenta() {
                                                 if (!sinStock) agregarProducto(producto);
                                             }}
                                             className={`
-                                                relative bg-white rounded-2xl shadow-sm border border-slate-200/80 hover:shadow-md hover:border-indigo-300 transition-all duration-200 
+                                                relative bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 
                                                 flex flex-col text-left group overflow-hidden cursor-pointer
-                                                ${sinStock ? "opacity-60 cursor-not-allowed grayscale" : "active:scale-[0.98]"}
+                                                ${sinStock 
+                                                    ? "opacity-60 cursor-not-allowed grayscale border border-slate-200/80" 
+                                                    : esCombo
+                                                        ? "border-2 border-rose-400 shadow-rose-500/10 active:scale-[0.98]"
+                                                        : "border border-slate-200/80 hover:border-indigo-300 active:scale-[0.98]"
+                                                }
                                             `}
                                         >
-                                            {/* Badge de Stock */}
-                                            <div className="absolute top-2.5 right-2.5 z-10 flex gap-1">
+                                            {/* Badges TOP RIGHT */}
+                                            <div className="absolute top-2.5 right-2.5 z-10 flex flex-col gap-1 items-end">
+                                                {esCombo && (
+                                                    <span className="bg-gradient-to-r from-rose-500 to-pink-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                                                        🎁 COMBO
+                                                    </span>
+                                                )}
                                                 {pocoStock && (
                                                     <span className="bg-amber-100/90 backdrop-blur-sm text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border border-amber-200">
                                                         Quedan {producto.stock}
@@ -884,11 +938,17 @@ export default function RegistrarVenta() {
                                     </div>
                                     <input
                                         type="text"
-                                        placeholder="Nombre del cliente (opcional)"
+                                        list="vecinos-list"
+                                        placeholder={metodoPago === "fiado" ? "Nombre del vecino (Obligatorio)" : "Nombre del cliente (Opcional)"}
                                         value={clienteNombre}
                                         onChange={(e) => setClienteNombre(e.target.value)}
-                                        className="w-full pl-8 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                                        className={`w-full pl-8 pr-8 py-2 bg-slate-50 border ${metodoPago === 'fiado' && !clienteNombre ? 'border-amber-400 ring-1 ring-amber-400' : 'border-slate-200'} rounded-xl text-xs sm:text-sm focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all`}
                                     />
+                                    <datalist id="vecinos-list">
+                                        {vecinosFiados.map((v, i) => (
+                                            <option key={i} value={v} />
+                                        ))}
+                                    </datalist>
                                     {clienteNombre && (
                                         <button
                                             type="button"
@@ -932,12 +992,13 @@ export default function RegistrarVenta() {
                                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                                         Método de Pago
                                     </label>
-                                    <div className="grid grid-cols-4 gap-1.5">
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                                         {[
                                             { id: "efectivo", label: "Efectivo", icon: <IoCashOutline /> },
                                             { id: "nequi", label: "Nequi", icon: <IoPhonePortraitOutline /> },
                                             { id: "daviplata", label: "Daviplata", icon: <IoPhonePortraitOutline /> },
-                                            { id: "tarjeta", label: "Tarjeta", icon: <IoCardOutline /> }
+                                            { id: "tarjeta", label: "Tarjeta", icon: <IoCardOutline /> },
+                                            { id: "fiado", label: "Fiado", icon: <IoPersonOutline /> }
                                         ].map(m => (
                                             <button
                                                 key={m.id}

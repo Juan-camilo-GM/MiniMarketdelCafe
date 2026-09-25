@@ -83,7 +83,7 @@ const FacturaCard = ({ factura, onEdit, onDelete, onView }) => {
   );
 };
 
-const FacturasProveedor = ({ facturas, onRefresh }) => {
+const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
   const [editandoFactura, setEditandoFactura] = useState(null);
   const [facturaAEliminar, setFacturaAEliminar] = useState(null);
   const [facturaParaVer, setFacturaParaVer] = useState(null);
@@ -394,16 +394,30 @@ const FacturasProveedor = ({ facturas, onRefresh }) => {
       {/* Encabezado con controles de paginación */}
       <div className="p-6 border-b border-slate-100 bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800">
-              Facturas registradas ({facturasFiltradas.length})
-            </h3>
-            <p className="text-sm text-slate-500 mt-1">
-              Gestiona y visualiza tus facturas de proveedores
-            </p>
+          <div className="flex justify-between items-center w-full md:w-auto gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">
+                Facturas registradas ({facturasFiltradas.length})
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Gestiona y visualiza tus facturas de proveedores
+              </p>
+            </div>
+            <button
+              onClick={onNuevaFactura}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-purple-500/20 md:hidden"
+            >
+              Nueva
+            </button>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
+            <button
+              onClick={onNuevaFactura}
+              className="hidden md:flex bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl items-center justify-center gap-2 transition-all shadow-md shadow-purple-500/20 font-semibold"
+            >
+              Nueva Factura
+            </button>
             {/* Selector de items por página */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500 font-medium">Mostrar:</span>
