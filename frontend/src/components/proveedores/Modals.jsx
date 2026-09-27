@@ -1,3 +1,4 @@
+import { imageToPdfBlob } from "../../lib/pdfUtils";
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { getTodayDateString } from "../../lib/dateUtils";
@@ -133,9 +134,11 @@ export const Modals = ({
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [cantidadProducto, setCantidadProducto] = useState(1);
   const [precioProducto, setPrecioProducto] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Función para guardar factura CON IMAGEN
   const guardarFactura = async () => {
+    if (isProcessing) return;
     if (!formFactura.proveedor_id || !formFactura.numero_factura.trim() || !formFactura.monto) {
       toast.error("Proveedor, número de factura y monto son requeridos", {
         icon: <IoAlertCircleOutline size={22} />,
@@ -143,6 +146,9 @@ export const Modals = ({
       });
       return;
     }
+
+    setIsProcessing(true);
+    const toastId = toast.loading("Guardando factura...");
 
     try {
       let imagen_url = null;
@@ -183,7 +189,8 @@ export const Modals = ({
 
       if (error) throw error;
 
-      toast.success("Factura registrada exitosamente", {
+      toast.success("Factura guardada exitosamente", {
+        id: toastId,
         duration: 4000,
       });
 
@@ -199,14 +206,18 @@ export const Modals = ({
         : error.message || "Error al guardar la factura";
 
       toast.error(mensaje, {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 6000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Función para guardar pedido
   const guardarPedido = async () => {
+    if (isProcessing) return;
     if (!formPedido.proveedor_id) {
       toast.error("Selecciona un proveedor", {
         icon: <IoAlertCircleOutline size={22} />,
@@ -222,6 +233,9 @@ export const Modals = ({
       });
       return;
     }
+
+    setIsProcessing(true);
+    const toastId = toast.loading("Guardando pedido...");
 
     try {
       const pedidoData = {
@@ -241,6 +255,7 @@ export const Modals = ({
       if (error) throw error;
 
       toast.success("Pedido registrado exitosamente", {
+        id: toastId,
         duration: 4000,
       });
 
@@ -256,14 +271,18 @@ export const Modals = ({
         : error.message || "Error al guardar el pedido";
 
       toast.error(mensaje, {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 6000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   // Función para guardar proveedor
   const guardarProveedor = async () => {
+    if (isProcessing) return;
     if (!formProveedor.nombre.trim()) {
       toast.error("El nombre del proveedor es requerido", {
         icon: <IoAlertCircleOutline size={22} />,
@@ -271,6 +290,9 @@ export const Modals = ({
       });
       return;
     }
+
+    setIsProcessing(true);
+    const toastId = toast.loading("Guardando proveedor...");
 
     try {
       const { error } = await supabase
@@ -280,6 +302,7 @@ export const Modals = ({
       if (error) throw error;
 
       toast.success("Proveedor registrado exitosamente", {
+        id: toastId,
         duration: 4000,
       });
 
@@ -295,9 +318,12 @@ export const Modals = ({
         : error.message || "Error al guardar el proveedor";
 
       toast.error(mensaje, {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 6000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -404,7 +430,7 @@ export const Modals = ({
 
     const toastId = toast.loading("Esceneando y convirtiendo a PDF...");
     try {
-        const { imageToPdfBlob } = await import('../../lib/pdfUtils');
+        
         const pdfFile = await imageToPdfBlob(file);
         
         setFormFactura(prev => ({
@@ -584,9 +610,10 @@ export const Modals = ({
             </button>
             <button
               onClick={guardarFactura}
-              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
+              disabled={isProcessing}
+              className={`px-4 py-2 text-white font-semibold rounded-xl shadow-lg transition-all ${isProcessing ? 'bg-indigo-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}`}
             >
-              Guardar Factura
+              {isProcessing ? 'Guardando...' : 'Guardar Factura'}
             </button>
           </div>
         </div>
@@ -761,10 +788,10 @@ export const Modals = ({
             </button>
             <button
               onClick={guardarPedido}
-              disabled={!formPedido.proveedor_id || formPedido.productos.length === 0}
-              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30 transition-all"
+              disabled={!formPedido.proveedor_id || formPedido.productos.length === 0 || isProcessing}
+              className={`px-4 py-2 text-white font-semibold rounded-xl transition-all shadow-lg ${!formPedido.proveedor_id || formPedido.productos.length === 0 || isProcessing ? 'bg-indigo-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}`}
             >
-              Guardar Pedido
+              {isProcessing ? 'Guardando...' : 'Guardar Pedido'}
             </button>
           </div>
         </div>
@@ -873,9 +900,10 @@ export const Modals = ({
             </button>
             <button
               onClick={guardarProveedor}
-              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-500/30 transition-all"
+              disabled={isProcessing}
+              className={`px-4 py-2 text-white font-semibold rounded-xl transition-all shadow-lg ${isProcessing ? 'bg-indigo-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}`}
             >
-              Guardar Proveedor
+              {isProcessing ? 'Guardando...' : 'Guardar Proveedor'}
             </button>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { imageToPdfBlob } from "../../lib/pdfUtils";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { formatColombiaDate } from "../../lib/dateUtils";
@@ -31,7 +32,7 @@ const FacturaCard = ({ factura, onEdit, onDelete, onView }) => {
           <h4 className="font-bold text-slate-800 text-lg">{factura.numero_factura}</h4>
           <p className="text-sm text-slate-500 font-medium">{factura.proveedores?.nombre}</p>
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
           {factura.imagen_url && (
             <button
               onClick={() => onView(factura)}
@@ -88,6 +89,7 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
   const [facturaAEliminar, setFacturaAEliminar] = useState(null);
   const [facturaParaVer, setFacturaParaVer] = useState(null);
   const [filtroProveedor, setFiltroProveedor] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Estados para paginación
   const [paginaActual, setPaginaActual] = useState(1);
@@ -138,7 +140,10 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
   };
 
   const confirmarEliminacion = async () => {
-    if (!facturaAEliminar) return;
+    if (!facturaAEliminar || isProcessing) return;
+
+    setIsProcessing(true);
+    const toastId = toast.loading("Eliminando factura...");
 
     try {
       // Primero obtener la factura para ver si tiene imagen
@@ -165,6 +170,7 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
       if (error) throw error;
 
       toast.success("Factura eliminada exitosamente", {
+        id: toastId,
         duration: 4000,
       });
 
@@ -174,9 +180,12 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
     } catch (error) {
       console.error("Error eliminando factura:", error);
       toast.error("Error al eliminar la factura", {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 5000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -217,7 +226,7 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
 
     const toastId = toast.loading("Esceneando y convirtiendo a PDF...");
     try {
-        const { imageToPdfBlob } = await import('../../lib/pdfUtils');
+        
         const pdfFile = await imageToPdfBlob(file);
 
         setFormEditarFactura(prev => ({
@@ -280,6 +289,7 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
 
   // Función para guardar cambios de factura
   const guardarEditarFactura = async () => {
+    if (isProcessing) return;
     if (!formEditarFactura.numero_factura.trim() || !formEditarFactura.monto) {
       toast.error("Número de factura y monto son requeridos", {
         icon: <IoAlertCircleOutline size={22} />,
@@ -287,6 +297,9 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
       });
       return;
     }
+
+    setIsProcessing(true);
+    const toastId = toast.loading("Actualizando factura...");
 
     try {
       let nueva_imagen_url = formEditarFactura.imagen_url_actual;
@@ -354,6 +367,7 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
       if (error) throw error;
 
       toast.success("Factura actualizada exitosamente", {
+        id: toastId,
         duration: 4000,
       });
 
@@ -368,9 +382,12 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
         : error.message || "Error al actualizar la factura";
 
       toast.error(mensaje, {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 6000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -762,15 +779,17 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
           <div className="flex gap-3 justify-end pt-6 border-t border-slate-100">
             <button
               onClick={() => setEditandoFactura(null)}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+              disabled={isProcessing}
+              className={`px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-semibold transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
             >
               Cancelar
             </button>
             <button
               onClick={guardarEditarFactura}
-              className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
+              disabled={isProcessing}
+              className={`px-4 py-2 text-white font-semibold rounded-xl transition-all shadow-lg ${isProcessing ? 'bg-indigo-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}`}
             >
-              Guardar Cambios
+              {isProcessing ? 'Guardando...' : 'Guardar Cambios'}
             </button>
           </div>
         </div>
@@ -792,15 +811,17 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setFacturaAEliminar(null)}
-                  className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                  disabled={isProcessing}
+                  className={`py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmarEliminacion}
-                  className="py-3 px-4 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/30"
+                  disabled={isProcessing}
+                  className={`py-3 px-4 rounded-xl text-white font-semibold transition-colors shadow-lg ${isProcessing ? 'bg-rose-400 cursor-not-allowed shadow-none' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/30'}`}
                 >
-                  Eliminar
+                  {isProcessing ? 'Eliminando...' : 'Eliminar'}
                 </button>
               </div>
             </div>

@@ -20,6 +20,7 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
     direccion: "",
     productos_sum: "",
   });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Filtrar proveedores por búsqueda
   const proveedoresFiltrados = busquedaProveedor
@@ -89,6 +90,7 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
   };
 
   const guardarProveedor = async () => {
+    if (isProcessing) return;
     if (!formProveedor.nombre.trim()) {
       toast.error("El nombre del proveedor es requerido", {
         icon: <IoAlertCircleOutline size={22} />,
@@ -96,6 +98,9 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
       });
       return;
     }
+
+    setIsProcessing(true);
+    const toastId = toast.loading(editandoProveedor ? "Actualizando proveedor..." : "Guardando proveedor...");
 
     try {
       let error;
@@ -116,6 +121,7 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
       if (error) throw error;
 
       toast.success(`Proveedor ${editandoProveedor ? "actualizado" : "registrado"} exitosamente`, {
+        id: toastId,
         duration: 4000,
       });
 
@@ -133,9 +139,12 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
         : "Error al guardar el proveedor";
 
       toast.error(mensaje, {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 5000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -544,9 +553,10 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
                 </button>
                 <button
                   onClick={guardarProveedor}
-                  className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
+                  disabled={isProcessing}
+                  className={`px-4 py-2 text-white font-semibold rounded-xl transition-all shadow-lg ${isProcessing ? 'bg-indigo-400 cursor-not-allowed shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'}`}
                 >
-                  {editandoProveedor ? "Actualizar" : "Guardar"}
+                  {isProcessing ? 'Procesando...' : editandoProveedor ? "Actualizar" : "Guardar"}
                 </button>
               </div>
             </div>
