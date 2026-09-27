@@ -11,12 +11,13 @@ import {
 } from "react-icons/io5";
 import toast from "react-hot-toast";
 import CartLoader from "../../components/ui/CartLoader";
+import { getTodayDateString } from "../../lib/dateUtils";
 
 export default function CierreCaja() {
   const [loading, setLoading] = useState(true);
   const [ventasHoy, setVentasHoy] = useState([]);
   const [efectivoContado, setEfectivoContado] = useState("");
-  const [fechaArqueo, setFechaArqueo] = useState(new Date().toISOString().split("T")[0]);
+  const [fechaArqueo, setFechaArqueo] = useState(getTodayDateString());
 
   // Resumen
   const [totales, setTotales] = useState({
@@ -41,10 +42,9 @@ export default function CierreCaja() {
   const cargarVentasDia = async () => {
     setLoading(true);
     try {
-      const inicioDia = new Date(fechaArqueo);
-      inicioDia.setHours(0, 0, 0, 0);
-      const finDia = new Date(fechaArqueo);
-      finDia.setHours(23, 59, 59, 999);
+      const [year, month, day] = fechaArqueo.split("-").map(Number);
+      const inicioDia = new Date(year, month - 1, day, 0, 0, 0, 0);
+      const finDia = new Date(year, month - 1, day, 23, 59, 59, 999);
 
       const { data, error } = await supabase
         .from("pedidos")
