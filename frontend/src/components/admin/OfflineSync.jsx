@@ -57,11 +57,17 @@ export default function OfflineSync() {
         if (errorPedido) throw errorPedido;
 
         // Descontar stock
-        for (const p of pedido.productos) {
-          const { data: prod } = await supabase.from("productos").select("stock").eq("id", p.id).single();
-          if (prod) {
-            await supabase.from("productos").update({ stock: prod.stock - p.cantidad }).eq("id", p.id);
-          }
+        const ids = pedido.productos.map(p => p.id);
+        if (ids.length > 0) {
+            const { data: productosActuales } = await supabase.from("productos").select("id, stock").in("id", ids);
+            const updates = pedido.productos.map(p => {
+                const prod = productosActuales?.find(x => x.id === p.id);
+                if (prod) {
+                    return supabase.from("productos").update({ stock: prod.stock - p.cantidad }).eq("id", p.id);
+                }
+                return Promise.resolve();
+            });
+            await Promise.all(updates);
         }
         exitosas++;
       } catch (error) {

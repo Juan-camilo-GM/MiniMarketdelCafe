@@ -13,6 +13,7 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
   const [viendoPedido, setViendoPedido] = useState(null);
   const [pedidoAEliminar, setPedidoAEliminar] = useState(null);
   const [pedidoACambiarEstado, setPedidoACambiarEstado] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [busquedaProveedor, setBusquedaProveedor] = useState("");
 
@@ -77,41 +78,42 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
   // Función para actualizar stock de productos
   const actualizarStockProductos = async (productosPedido, operacion) => {
     // operacion: "sumar" (pedido confirmado) o "restar" (pedido cancelado)
-
     try {
       const productosConError = [];
+      const nombres = productosPedido.map(p => p.nombre);
 
-      for (const prod of productosPedido) {
+      if (nombres.length === 0) return { exitoso: true, productosConError: [] };
+
+      const { data: productosActuales, error: errorGet } = await supabase
+        .from("productos")
+        .select("stock, id, nombre")
+        .in("nombre", nombres);
+
+      if (errorGet) {
+        console.error("Error obteniendo productos", errorGet);
+        return { exitoso: false, productosConError: nombres };
+      }
+
+      const updates = productosPedido.map(async prod => {
         try {
-          // Buscar producto por nombre (igual que en HistorialPedidos)
-          const { data: productoActual, error: errorGet } = await supabase
-            .from("productos")
-            .select("stock, id, nombre")
-            .eq("nombre", prod.nombre)
-            .single();
-
-          if (errorGet) {
-            console.error(`Producto no encontrado: ${prod.nombre}`, errorGet);
+          const productoActual = productosActuales?.find(p => p.nombre === prod.nombre);
+          if (!productoActual) {
+            console.error(`Producto no encontrado: ${prod.nombre}`);
             productosConError.push(prod.nombre);
-            continue;
+            return;
           }
 
-          // Calcular nuevo stock
           let nuevoStock = parseFloat(productoActual.stock || 0);
-
           if (operacion === "sumar") {
             nuevoStock += parseFloat(prod.cantidad || 0);
           } else if (operacion === "restar") {
             nuevoStock -= parseFloat(prod.cantidad || 0);
-
-            // Evitar stock negativo (aunque en pedidos a proveedores es raro)
             if (nuevoStock < 0) {
               console.warn(`⚠️ Stock negativo para ${productoActual.nombre}. Ajustando a 0`);
               nuevoStock = 0;
             }
           }
 
-          // Actualizar stock en la base de datos
           const { error: errorUpdate } = await supabase
             .from("productos")
             .update({ stock: nuevoStock })
@@ -123,12 +125,12 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
           } else {
             console.log(`✅ ${operacion === "sumar" ? "Sumado" : "Restado"} ${prod.cantidad} unidades a ${prod.nombre}. Stock nuevo: ${nuevoStock}`);
           }
-
         } catch (error) {
           console.error(`Error procesando producto ${prod.nombre}:`, error);
           productosConError.push(prod.nombre);
         }
-      }
+      });
+      await Promise.all(updates);
 
       return {
         exitoso: productosConError.length === 0,
@@ -147,7 +149,9 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
   };
 
   const confirmarCambioEstado = async () => {
-    if (!pedidoACambiarEstado) return;
+    if (!pedidoACambiarEstado || isProcessing) return;
+    setIsProcessing(true);
+    const toastId = toast.loading("Actualizando estado...");
 
     const { id: pedidoId, nuevoEstado } = pedidoACambiarEstado;
 
@@ -216,6 +220,7 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
       }
 
       toast.success(mensaje, {
+        id: toastId,
         duration: 4000,
       });
 
@@ -230,9 +235,12 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
         : error.message || "Error al cambiar el estado del pedido";
 
       toast.error(mensaje, {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 6000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -241,7 +249,9 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
   };
 
   const confirmarEliminacion = async () => {
-    if (!pedidoAEliminar) return;
+    if (!pedidoAEliminar || isProcessing) return;
+    setIsProcessing(true);
+    const toastId = toast.loading("Eliminando pedido...");
 
     try {
       // Si el pedido está confirmado, ajustar stock
@@ -257,6 +267,7 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
       if (error) throw error;
 
       toast.success("Pedido eliminado exitosamente", {
+        id: toastId,
         duration: 4000,
       });
 
@@ -266,9 +277,12 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
     } catch (error) {
       console.error("Error eliminando pedido:", error);
       toast.error("Error al eliminar el pedido", {
+        id: toastId,
         icon: <IoCloseCircleOutline size={22} />,
         duration: 5000,
       });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -730,15 +744,17 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setPedidoAEliminar(null)}
-                  className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                  disabled={isProcessing}
+                  className={`py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmarEliminacion}
-                  className="py-3 px-4 rounded-xl bg-rose-600 text-white font-semibold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-500/30"
+                  disabled={isProcessing}
+                  className={`py-3 px-4 rounded-xl text-white font-semibold transition-colors shadow-lg ${isProcessing ? 'bg-rose-400 cursor-not-allowed shadow-none' : 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/30'}`}
                 >
-                  Eliminar
+                  {isProcessing ? 'Eliminando...' : 'Eliminar'}
                 </button>
               </div>
             </div>
@@ -775,18 +791,20 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setPedidoACambiarEstado(null)}
-                  className="py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                  disabled={isProcessing}
+                  className={`py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold transition-colors ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={confirmarCambioEstado}
-                  className={`py-3 px-4 rounded-xl text-white font-semibold transition-colors shadow-lg ${pedidoACambiarEstado.nuevoEstado === 'confirmado' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30' :
+                  disabled={isProcessing}
+                  className={`py-3 px-4 rounded-xl text-white font-semibold transition-colors shadow-lg ${isProcessing ? 'bg-slate-400 cursor-not-allowed shadow-none' : pedidoACambiarEstado.nuevoEstado === 'confirmado' ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30' :
                     pedidoACambiarEstado.nuevoEstado === 'cancelado' ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/30' :
                       'bg-amber-600 hover:bg-amber-700 shadow-amber-500/30'
                     }`}
                 >
-                  {pedidoACambiarEstado.nuevoEstado === 'confirmado' ? 'Confirmar' :
+                  {isProcessing ? 'Procesando...' : pedidoACambiarEstado.nuevoEstado === 'confirmado' ? 'Confirmar' :
                     pedidoACambiarEstado.nuevoEstado === 'cancelado' ? 'Cancelar Pedido' :
                       'Reactivar'}
                 </button>

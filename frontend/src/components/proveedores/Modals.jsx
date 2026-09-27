@@ -382,7 +382,7 @@ export const Modals = ({
     });
   };
 
-  const handleImagenFactura = (e) => {
+  const handleImagenFactura = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -394,19 +394,30 @@ export const Modals = ({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La imagen es muy grande. Máximo 5MB", {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("La imagen es muy grande. Máximo 10MB", {
         icon: <IoCloseCircleOutline size={22} />,
         duration: 4000,
       });
       return;
     }
 
-    setFormFactura(prev => ({
-      ...prev,
-      imagen: file,
-      imagen_preview: URL.createObjectURL(file)
-    }));
+    const toastId = toast.loading("Esceneando y convirtiendo a PDF...");
+    try {
+        const { imageToPdfBlob } = await import('../../lib/pdfUtils');
+        const pdfFile = await imageToPdfBlob(file);
+        
+        setFormFactura(prev => ({
+          ...prev,
+          imagen: pdfFile,
+          imagen_preview: URL.createObjectURL(file) // Mantenemos la vista previa como imagen
+        }));
+        
+        toast.success("Imagen convertida a PDF exitosamente", { id: toastId });
+    } catch (error) {
+        console.error("Error convirtiendo a PDF:", error);
+        toast.error("Error al convertir la imagen a PDF", { id: toastId });
+    }
   };
 
   return (
@@ -499,16 +510,26 @@ export const Modals = ({
               Imagen de la Factura (opcional)
             </label>
             <div className="space-y-3">
-              <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <IoCameraOutline className="w-8 h-8 text-slate-400 mb-2" />
-                    <p className="text-sm text-slate-500">
-                      {formFactura.imagen ? formFactura.imagen.name :
-                        "Haz clic para subir una imagen"}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">JPG, PNG (Max. 5MB)</p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors text-center p-2">
+                  <IoCameraOutline className="w-8 h-8 text-indigo-500 mb-2" />
+                  <p className="text-sm font-semibold text-slate-700">Tomar Foto</p>
+                  <p className="text-xs text-slate-400 mt-1">Escanear a PDF</p>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImagenFactura}
+                  />
+                </label>
+                
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors text-center p-2">
+                  <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <p className="text-sm font-semibold text-slate-700">Subir Imagen</p>
+                  <p className="text-xs text-slate-400 mt-1">Convertir a PDF</p>
                   <input
                     type="file"
                     className="hidden"
@@ -517,6 +538,12 @@ export const Modals = ({
                   />
                 </label>
               </div>
+
+              {formFactura.imagen && (
+                <div className="text-xs text-center font-medium text-emerald-600 bg-emerald-50 py-2 rounded-lg border border-emerald-100">
+                  📄 Archivo listo: {formFactura.imagen.name}
+                </div>
+              )}
 
               {formFactura.imagen_preview && (
                 <div className="mt-3">

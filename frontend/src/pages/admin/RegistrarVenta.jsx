@@ -306,13 +306,16 @@ export default function RegistrarVenta() {
 
             // 1. Verificar stock nuevamente (Solo si hay internet)
             if (navigator.onLine) {
-                for (const item of sanitizedCarrito) {
-                    const { data: prodActual } = await supabase
-                        .from("productos")
-                        .select("stock")
-                        .eq("id", item.id)
-                        .single();
+                const ids = sanitizedCarrito.map(item => item.id);
+                const { data: productosActuales, error: errorStock } = await supabase
+                    .from("productos")
+                    .select("id, stock")
+                    .in("id", ids);
 
+                if (errorStock) throw errorStock;
+
+                for (const item of sanitizedCarrito) {
+                    const prodActual = productosActuales?.find(p => p.id === item.id);
                     if (!prodActual || prodActual.stock < item.cantidad) {
                         throw new Error(`Stock insuficiente para ${item.nombre}`);
                     }
@@ -371,18 +374,24 @@ export default function RegistrarVenta() {
                 if (errorPedido) throw errorPedido;
 
                 // 3. Actualizar stock
-                for (const item of sanitizedCarrito) {
-                    const { data: prod } = await supabase
-                        .from("productos")
-                        .select("stock")
-                        .eq("id", item.id)
-                        .single();
+                const ids = sanitizedCarrito.map(item => item.id);
+                const { data: productosActuales } = await supabase
+                    .from("productos")
+                    .select("id, stock")
+                    .in("id", ids);
 
-                    await supabase
-                        .from("productos")
-                        .update({ stock: prod.stock - item.cantidad })
-                        .eq("id", item.id);
-                }
+                const updates = sanitizedCarrito.map(item => {
+                    const prod = productosActuales?.find(p => p.id === item.id);
+                    if (prod) {
+                        return supabase
+                            .from("productos")
+                            .update({ stock: prod.stock - item.cantidad })
+                            .eq("id", item.id);
+                    }
+                    return Promise.resolve();
+                });
+                
+                await Promise.all(updates);
                 
                 toast.success("Venta registrada correctamente");
             }
@@ -1181,15 +1190,24 @@ export default function RegistrarVenta() {
                             <div className="grid grid-cols-2 gap-2.5">
                                 <button
                                     onClick={() => setModalConfirmacion(false)}
-                                    className="py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition-colors text-sm cursor-pointer"
+                                    disabled={procesando}
+                                    className={`py-3 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold transition-colors text-sm ${procesando ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"}`}
                                 >
                                     Revisar
                                 </button>
                                 <button
                                     onClick={procesarVenta}
-                                    className="py-3 px-4 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/25 text-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                                    disabled={procesando}
+                                    className={`py-3 px-4 rounded-xl text-white font-bold transition-colors shadow-lg text-sm flex items-center justify-center gap-1.5 ${procesando ? "bg-emerald-400 cursor-not-allowed shadow-none" : "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/25 cursor-pointer"}`}
                                 >
-                                    Confirmar Venta
+                                    {procesando ? (
+                                        <>
+                                            <CartLoader size="small" />
+                                            <span>Procesando...</span>
+                                        </>
+                                    ) : (
+                                        "Confirmar Venta"
+                                    )}
                                 </button>
                             </div>
                         </div>

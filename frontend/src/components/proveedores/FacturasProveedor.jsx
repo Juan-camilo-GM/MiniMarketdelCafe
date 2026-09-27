@@ -195,7 +195,7 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
   };
 
   // Función para manejar nueva imagen en edición
-  const handleImagenEditar = (e) => {
+  const handleImagenEditar = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -207,19 +207,29 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("La imagen es muy grande. Máximo 5MB", {
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("La imagen es muy grande. Máximo 10MB", {
         icon: <IoCloseCircleOutline size={22} />,
         duration: 4000,
       });
       return;
     }
 
-    setFormEditarFactura(prev => ({
-      ...prev,
-      imagen: file,
-      imagen_preview: URL.createObjectURL(file)
-    }));
+    const toastId = toast.loading("Esceneando y convirtiendo a PDF...");
+    try {
+        const { imageToPdfBlob } = await import('../../lib/pdfUtils');
+        const pdfFile = await imageToPdfBlob(file);
+
+        setFormEditarFactura(prev => ({
+          ...prev,
+          imagen: pdfFile,
+          imagen_preview: URL.createObjectURL(file) // Vista previa como imagen
+        }));
+        toast.success("Imagen convertida a PDF exitosamente", { id: toastId });
+    } catch (error) {
+        console.error("Error convirtiendo a PDF:", error);
+        toast.error("Error al convertir la imagen a PDF", { id: toastId });
+    }
   };
 
   // Función para eliminar imagen en edición
@@ -562,16 +572,24 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
 
                 {facturaParaVer.imagen_url ? (
                   <div className="space-y-4">
-                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-                      <img
-                        src={getImageUrl(facturaParaVer.imagen_url)}
-                        alt={`Factura ${facturaParaVer.numero_factura}`}
-                        className="w-full h-auto max-h-96 object-contain"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/600x400?text=Imagen+no+disponible";
-                        }}
-                      />
+                    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm flex items-center justify-center bg-slate-100 min-h-[16rem]">
+                      {facturaParaVer.imagen_url.toLowerCase().endsWith('.pdf') ? (
+                        <iframe
+                          src={getImageUrl(facturaParaVer.imagen_url)}
+                          title={`Factura ${facturaParaVer.numero_factura}`}
+                          className="w-full h-96 border-0"
+                        />
+                      ) : (
+                        <img
+                          src={getImageUrl(facturaParaVer.imagen_url)}
+                          alt={`Factura ${facturaParaVer.numero_factura}`}
+                          className="w-full h-auto max-h-96 object-contain"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/600x400?text=Imagen+no+disponible";
+                          }}
+                        />
+                      )}
                     </div>
 
                     <div className="text-center">
@@ -704,17 +722,26 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
               )}
 
               {/* Botón para subir nueva imagen */}
-              <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors bg-white">
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <IoCameraOutline className="w-8 h-8 text-slate-400 mb-2" />
-                    <p className="text-sm text-slate-500">
-                      {formEditarFactura.imagen ?
-                        `Cambiar imagen (${formEditarFactura.imagen.name})` :
-                        "Haz clic para cambiar la imagen"}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">JPG, PNG (Max. 5MB)</p>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors text-center p-2 bg-white">
+                  <IoCameraOutline className="w-8 h-8 text-indigo-500 mb-2" />
+                  <p className="text-sm font-semibold text-slate-700">Tomar Foto</p>
+                  <p className="text-xs text-slate-400 mt-1">Escanear a PDF</p>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImagenEditar}
+                  />
+                </label>
+                
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors text-center p-2 bg-white">
+                  <svg className="w-8 h-8 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <p className="text-sm font-semibold text-slate-700">Subir Imagen</p>
+                  <p className="text-xs text-slate-400 mt-1">Convertir a PDF</p>
                   <input
                     type="file"
                     className="hidden"
@@ -723,6 +750,12 @@ const FacturasProveedor = ({ facturas, onRefresh, onNuevaFactura }) => {
                   />
                 </label>
               </div>
+
+              {formEditarFactura.imagen && (
+                <div className="text-xs text-center font-medium text-emerald-600 bg-emerald-50 py-2 rounded-lg border border-emerald-100">
+                  📄 Archivo listo: {formEditarFactura.imagen.name}
+                </div>
+              )}
             </div>
           </div>
 

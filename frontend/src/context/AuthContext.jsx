@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
         setUser(null);
         setIsAdmin(false);
         setLoading(false);
+        localStorage.removeItem("is_admin_cached");
         return;
       }
 
@@ -27,16 +28,28 @@ export function AuthProvider({ children }) {
 
       if (adminError) {
         console.error("Error verificando admin:", adminError);
-        setIsAdmin(false);
+        if (!navigator.onLine || adminError.message?.toLowerCase().includes("fetch")) {
+          console.warn("Modo offline o error de red: usando estado de admin cacheado");
+          setIsAdmin(localStorage.getItem("is_admin_cached") === "true");
+        } else {
+          setIsAdmin(false);
+          localStorage.removeItem("is_admin_cached");
+        }
       } else {
-        setIsAdmin(!!adminData);
+        const isAdminValue = !!adminData;
+        setIsAdmin(isAdminValue);
+        localStorage.setItem("is_admin_cached", isAdminValue ? "true" : "false");
       }
 
       setUser(session.user);
     } catch (err) {
       console.error("Error inesperado en auth:", err);
-      setIsAdmin(false);
-      setUser(null);
+      if (!navigator.onLine) {
+        setIsAdmin(localStorage.getItem("is_admin_cached") === "true");
+      } else {
+        setIsAdmin(false);
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }

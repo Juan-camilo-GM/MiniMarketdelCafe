@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
 import {
@@ -7,8 +8,12 @@ import {
 } from "react-icons/io5";
 
 export const useOrderActions = (fetchPedidos, fetchProductosStockBajo) => {
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const actualizarEstado = async (id, nuevoEstado) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+        const toastId = toast.loading("Procesando pedido...");
         try {
             const { data: pedido, error: errorPedido } = await supabase
                 .from("pedidos")
@@ -17,68 +22,75 @@ export const useOrderActions = (fetchPedidos, fetchProductosStockBajo) => {
                 .single();
 
             if (errorPedido || !pedido) {
-                toast.error("Error al obtener los datos del pedido", {
-                    icon: <IoAlertCircleOutline size={22} />,
-                });
+                toast.error("Error al obtener los datos del pedido", { id: toastId, icon: <IoAlertCircleOutline size={22} /> });
                 return;
             }
 
             // === CONFIRMAR PEDIDO ===
             if (nuevoEstado === "confirmado" && pedido.estado !== "confirmado") {
                 const productosConError = [];
-
-                for (const prod of pedido.productos || []) {
-                    const { data: productoActual, error: errorGet } = await supabase
+                const ids = pedido.productos?.map(p => p.id) || [];
+                
+                if (ids.length > 0) {
+                    const { data: productosActuales, error: errorGet } = await supabase
                         .from("productos")
-                        .select("stock")
-                        .eq("id", prod.id)
-                        .single();
+                        .select("id, stock, nombre")
+                        .in("id", ids);
 
-                    if (errorGet || !productoActual) {
-                        productosConError.push(prod.nombre || "ID: " + prod.id);
-                        continue;
-                    }
-
-                    if (productoActual.stock - prod.cantidad < 0) {
-                        toast.error(
-                            `Stock insuficiente para "${prod.nombre}" (disponible: ${productoActual.stock}, solicitado: ${prod.cantidad})`,
-                            { icon: <IoAlertCircleOutline size={24} />, duration: 8000 }
-                        );
+                    if (errorGet || !productosActuales) {
+                        toast.error("Error al verificar inventario", { id: toastId });
                         return;
                     }
 
-                    const { error: errorUpdate } = await supabase
-                        .from("productos")
-                        .update({ stock: productoActual.stock - prod.cantidad })
-                        .eq("id", prod.id);
+                    // Verificar stock primero
+                    for (const prod of pedido.productos) {
+                        const productoActual = productosActuales.find(p => p.id === prod.id);
+                        if (!productoActual) {
+                            productosConError.push(prod.nombre || "ID: " + prod.id);
+                            continue;
+                        }
 
-                    if (errorUpdate) productosConError.push(prod.nombre);
-                }
+                        if (productoActual.stock - prod.cantidad < 0) {
+                            toast.error(`Stock insuficiente para "${prod.nombre}" (disponible: ${productoActual.stock}, solicitado: ${prod.cantidad})`, { id: toastId, icon: <IoAlertCircleOutline size={24} />, duration: 8000 });
+                            return;
+                        }
+                    }
 
-                if (productosConError.length > 0) {
-                    toast.error(`Error al actualizar stock: ${productosConError.join(", ")}`, {
-                        icon: <IoCloseCircleOutline size={22} />,
-                        duration: 7000,
+                    // Actualizar stock en paralelo
+                    const updates = pedido.productos.map(prod => {
+                        const productoActual = productosActuales.find(p => p.id === prod.id);
+                        if (productoActual) {
+                            return supabase
+                                .from("productos")
+                                .update({ stock: productoActual.stock - prod.cantidad })
+                                .eq("id", prod.id);
+                        }
+                        return Promise.resolve();
                     });
-                    return;
+                    await Promise.all(updates);
                 }
             }
 
             // === CANCELAR PEDIDO (devolver stock) ===
             if (nuevoEstado === "cancelado" && pedido.estado === "confirmado") {
-                for (const prod of pedido.productos || []) {
-                    const { data: productoActual } = await supabase
+                const ids = pedido.productos?.map(p => p.id) || [];
+                if (ids.length > 0) {
+                    const { data: productosActuales } = await supabase
                         .from("productos")
-                        .select("stock")
-                        .eq("id", prod.id)
-                        .single();
+                        .select("id, stock")
+                        .in("id", ids);
 
-                    if (productoActual) {
-                        await supabase
-                            .from("productos")
-                            .update({ stock: productoActual.stock + prod.cantidad })
-                            .eq("id", prod.id);
-                    }
+                    const updates = pedido.productos.map(prod => {
+                        const productoActual = productosActuales?.find(p => p.id === prod.id);
+                        if (productoActual) {
+                            return supabase
+                                .from("productos")
+                                .update({ stock: productoActual.stock + prod.cantidad })
+                                .eq("id", prod.id);
+                        }
+                        return Promise.resolve();
+                    });
+                    await Promise.all(updates);
                 }
             }
 
@@ -89,9 +101,7 @@ export const useOrderActions = (fetchPedidos, fetchProductosStockBajo) => {
                 .eq("id", id);
 
             if (error) {
-                toast.error("Error al actualizar el estado del pedido", {
-                    icon: <IoCloseCircleOutline size={22} />,
-                });
+                toast.error("Error al actualizar el estado del pedido", { id: toastId, icon: <IoCloseCircleOutline size={22} /> });
                 return;
             }
 
@@ -101,7 +111,8 @@ export const useOrderActions = (fetchPedidos, fetchProductosStockBajo) => {
                     ? "Pedido confirmado y stock actualizado"
                     : nuevoEstado === "cancelado"
                         ? "Pedido cancelado y stock devuelto"
-                        : "Estado actualizado correctamente"
+                        : "Estado actualizado correctamente",
+                { id: toastId }
             );
 
             if (fetchPedidos) fetchPedidos();
@@ -109,23 +120,28 @@ export const useOrderActions = (fetchPedidos, fetchProductosStockBajo) => {
 
         } catch (err) {
             console.error("Error inesperado:", err);
-            toast.error("Error inesperado al procesar el pedido", {
-                icon: <IoCloseCircleOutline size={22} />,
-            });
+            toast.error("Error inesperado al procesar el pedido", { id: toastId, icon: <IoCloseCircleOutline size={22} /> });
+        } finally {
+            setIsProcessing(false);
         }
     };
 
     const eliminarPedido = async (id) => {
+        if (isProcessing) return;
+        setIsProcessing(true);
+        const toastId = toast.loading("Eliminando pedido...");
         try {
             const { error } = await supabase.from("pedidos").delete().eq("id", id);
             if (error) throw error;
-            toast.success("Pedido eliminado correctamente");
+            toast.success("Pedido eliminado correctamente", { id: toastId });
             if (fetchPedidos) fetchPedidos();
         } catch (error) {
             console.error("Error eliminando pedido:", error);
-            toast.error("Error al eliminar el pedido");
+            toast.error("Error al eliminar el pedido", { id: toastId });
+        } finally {
+            setIsProcessing(false);
         }
     };
 
-    return { actualizarEstado, eliminarPedido };
+    return { actualizarEstado, eliminarPedido, isProcessing };
 };
