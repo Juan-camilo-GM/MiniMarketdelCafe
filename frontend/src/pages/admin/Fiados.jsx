@@ -8,6 +8,7 @@ import {
   IoCardOutline
 } from "react-icons/io5";
 import toast from "react-hot-toast";
+import CartLoader from "../../components/ui/CartLoader";
 
 export default function Fiados() {
   const [fiados, setFiados] = useState([]);
@@ -119,7 +120,7 @@ export default function Fiados() {
 
       {loading ? (
         <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-slate-100">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <CartLoader size="large" />
           <p className="text-slate-500 font-medium">Revisando el cuaderno...</p>
         </div>
       ) : grupos.length === 0 ? (

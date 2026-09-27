@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CartLoader from "../../components/ui/CartLoader";
 import { obtenerConfiguracion, guardarConfiguracion } from "../../lib/config";
 import toast from "react-hot-toast";
 import { IoSaveOutline, IoLogoWhatsapp, IoCardOutline, IoMegaphoneOutline } from "react-icons/io5";
@@ -55,7 +56,7 @@ export default function Configuracion() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <CartLoader size="large" />
       </div>
     );
   }
@@ -73,7 +74,7 @@ export default function Configuracion() {
           className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {saving ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <CartLoader size="small" />
           ) : (
             <IoSaveOutline className="text-xl" />
           )}

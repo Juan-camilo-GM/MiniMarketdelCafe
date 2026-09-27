@@ -1,5 +1,6 @@
 // src/components/admin/BotonCerrarTienda.jsx
 import { useEffect, useState } from "react";
+import CartLoader from "../../components/ui/CartLoader";
 import { supabase } from "../../lib/supabase";
 import { IoStorefrontOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
@@ -71,7 +72,7 @@ export default function BotonCerrarTienda({ variant = "desktop" }) {
         {/* Spinner discreto solo cuando carga */}
         {loading && (
           <div className="absolute -right-1 -top-1">
-            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <CartLoader size="small" />
           </div>
         )}
       </button>
@@ -98,7 +99,7 @@ export default function BotonCerrarTienda({ variant = "desktop" }) {
 
       {/* Spinner discreto solo cuando carga */}
       {loading && (
-        <div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+        <CartLoader size="small" />
       )}
     </button>
   );

@@ -4,6 +4,7 @@ import { obtenerProductos } from "../../lib/productos";
 import { obtenerCategorias } from "../../lib/categorias";
 import { obtenerConfiguracion, guardarConfiguracion, subscribeConfiguracion } from "../../lib/config";
 import toast from "react-hot-toast";
+import CartLoader from "../../components/ui/CartLoader";
 import {
     IoSearch,
     IoCartOutline,
@@ -1124,7 +1125,7 @@ export default function RegistrarVenta() {
                                 >
                                     {procesando ? (
                                         <>
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <CartLoader size="small" />
                                             <span>Procesando...</span>
                                         </>
                                     ) : (

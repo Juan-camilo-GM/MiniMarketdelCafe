@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CartLoader from "../../components/ui/CartLoader";
 import { supabase } from "../../lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
@@ -205,7 +206,7 @@ export default function AdminLogin() {
             >
               {loading ? (
                 <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <CartLoader size="small" />
                   <span>Verificando...</span>
                 </>
               ) : (

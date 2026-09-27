@@ -9,7 +9,7 @@ export default function LowStockAlerts({ productos, loading }) {
                     Alerta de Stock
                 </h3>
                 <div className="text-center py-8">
-                    <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                    <CartLoader size="large" />
                     <p className="text-xs text-slate-400">Cargando...</p>
                 </div>
             </div>

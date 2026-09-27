@@ -20,6 +20,7 @@ import StatsCards from "../../components/admin/dashboard/StatsCards";
 import SalesChart from "../../components/admin/dashboard/SalesChart";
 import TopProducts from "../../components/admin/dashboard/TopProducts";
 import LowStockAlerts from "../../components/admin/dashboard/LowStockAlerts";
+import CartLoader from "../../components/ui/CartLoader";
 
 export default function Dashboard() {
   // Tabs state: 'resumen', 'pedidos', 'proveedores'
@@ -200,7 +201,7 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <CartLoader size="large" />
           <p className="text-xl font-semibold text-gray-700">Cargando dashboard...</p>
         </div>
       </div>

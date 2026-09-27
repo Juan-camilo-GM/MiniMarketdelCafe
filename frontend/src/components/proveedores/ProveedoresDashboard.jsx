@@ -14,6 +14,7 @@ import ProveedoresList from "./ProveedoresList";
 import PedidosProveedor from "./PedidosProveedor";
 import FacturasProveedor from "./FacturasProveedor";
 import { Modals } from "./Modals";
+import CartLoader from "../../components/ui/CartLoader";
 
 const ProveedoresDashboard = () => {
   const [subTabActivo, setSubTabActivo] = useState("resumen"); // 'resumen' | 'proveedores' | 'pedidos' | 'facturas'
@@ -82,7 +83,7 @@ const ProveedoresDashboard = () => {
   if (loading) {
     return (
       <div className="text-center py-16">
-        <div className="w-12 h-12 border-4 border-rose-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <CartLoader size="large" />
         <p className="text-slate-600 font-medium">Cargando gestión de proveedores y gastos...</p>
       </div>
     );

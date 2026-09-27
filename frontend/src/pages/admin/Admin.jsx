@@ -12,6 +12,7 @@ import {
   IoCloudUploadOutline
 } from "react-icons/io5";
 import { useEffect, useState, useMemo } from "react";
+import CartLoader from "../../components/ui/CartLoader";
 import toast from "react-hot-toast"
 import {
   obtenerProductos,
@@ -554,7 +555,7 @@ export default function Productos() {
               >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <CartLoader size="small" />
                     Guardando...
                   </>
                 ) : (
