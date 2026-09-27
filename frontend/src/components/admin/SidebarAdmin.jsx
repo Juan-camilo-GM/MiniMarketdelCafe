@@ -100,7 +100,15 @@ export default function SidebarAdmin() {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 space-y-2">
+          <Link
+            to="/catalogo"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 w-full text-left text-emerald-200 hover:bg-emerald-500/10 hover:text-emerald-100 rounded-xl transition-all font-medium"
+          >
+            <IoStorefrontOutline className="text-2xl" />
+            Ver Catálogo Público
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 w-full text-left text-rose-200 hover:bg-rose-500/10 hover:text-rose-100 rounded-xl transition-all font-medium"

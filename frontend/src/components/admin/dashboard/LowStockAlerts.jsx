@@ -1,3 +1,4 @@
+import CartLoader from "../../../components/ui/CartLoader";
 import { IoWarningOutline, IoAlertCircleOutline } from "react-icons/io5";
 
 export default function LowStockAlerts({ productos, loading }) {

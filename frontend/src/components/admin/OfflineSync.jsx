@@ -1,3 +1,4 @@
+import CartLoader from "../../components/ui/CartLoader";
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { IoCloudOfflineOutline, IoCloudUploadOutline, IoCheckmarkCircleOutline } from "react-icons/io5";

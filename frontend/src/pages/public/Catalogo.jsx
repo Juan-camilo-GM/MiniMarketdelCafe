@@ -5,7 +5,7 @@ import { obtenerProductos } from "../../lib/productos";
 import { obtenerCategorias } from "../../lib/categorias";
 import CarritoFlotante from "../../components/CarritoFlotante";
 import toast from "react-hot-toast";
-import { IoAlertCircleOutline, IoSearch } from "react-icons/io5";
+import { IoAlertCircleOutline, IoSearch, IoGrid, IoChevronForward } from "react-icons/io5";
 import CartLoader from "../../components/ui/CartLoader";
 
 import BannerOfertas from "../../components/BannerOfertas";
@@ -33,7 +33,7 @@ function ProductoSkeleton() {
 
 export default function Catalogo() {
   const [productos, setProductos] = useState([]);
-  const [_categorias, setCategorias] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [catMap, setCatMap] = useState({});
   const [searchParams, setSearchParams] = useSearchParams();
   const busqueda = searchParams.get("q") || "";
@@ -180,56 +180,110 @@ export default function Catalogo() {
 
   return (
     <div className="bg-gray-50/50 min-h-screen pb-20">
+      <div className="max-w-[1600px] mx-auto w-full pt-4 md:pt-8 px-4 md:px-8 lg:px-12">
+        
+        {/* Layout Flex: Sidebar + Main */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
+          
+          {/* Sidebar Categorías Desktop */}
+          <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
+            <div className="sticky top-28">
+              <div className="bg-white rounded-2xl shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                  <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2">
+                    <IoGrid className="text-indigo-500 text-lg" />
+                    Categorías
+                  </h3>
+                </div>
+                <nav className="p-3 space-y-1">
+                  <button
+                    onClick={() => {
+                      const newParams = new URLSearchParams(searchParams);
+                      newParams.delete("categoria");
+                      setSearchParams(newParams);
+                    }}
+                    className={`group w-full flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer ${!categoriaUrl ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600'}`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <div className={`w-1.5 h-1.5 rounded-full ${!categoriaUrl ? 'bg-white' : 'bg-slate-300 group-hover:bg-indigo-400'} transition-colors`} />
+                      Todos los productos
+                    </span>
+                    {!categoriaUrl && <IoChevronForward className="text-white opacity-80" />}
+                  </button>
+                  {categorias.map(cat => {
+                    const isActive = categoriaUrl === cat.id.toString();
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          const newParams = new URLSearchParams(searchParams);
+                          newParams.set("categoria", cat.id);
+                          setSearchParams(newParams);
+                        }}
+                        className={`group w-full flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200 cursor-pointer ${isActive ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-600 hover:bg-slate-50 hover:text-indigo-600'}`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-300 group-hover:bg-indigo-400'} transition-colors`} />
+                          {cat.nombre}
+                        </span>
+                        {isActive && <IoChevronForward className="text-white opacity-80" />}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+            </div>
+          </aside>
 
-      {/* Breadcrumb y Filtros */}
-      <div className="pt-2 md:pt-0 px-4 md:px-8 lg:px-12 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          {categoriaUrl && catMap[categoriaUrl] ? (
-            <>
-              <span>Catálogo</span>
-              <span className="text-gray-300">/</span>
-              <span className="font-bold text-gray-900">{catMap[categoriaUrl]}</span>
-              <button
-                onClick={() => {
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete("categoria");
-                  setSearchParams(newParams);
-                }}
-                className="ml-2 text-red-500 hover:text-red-700 text-xs font-medium hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                (Limpiar)
-              </button>
-            </>
-          ) : (
-            <span className="font-bold text-gray-900">Todos los productos</span>
-          )}
-        </div>
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Breadcrumb Mobile & Desktop */}
+            <div className="pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-100 w-fit">
+                {categoriaUrl && catMap[categoriaUrl] ? (
+                  <>
+                    <span>Catálogo</span>
+                    <span className="text-gray-300">/</span>
+                    <span className="font-bold text-indigo-600">{catMap[categoriaUrl]}</span>
+                    <button
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.delete("categoria");
+                        setSearchParams(newParams);
+                      }}
+                      className="ml-2 text-red-500 hover:text-red-600 text-xs font-bold hover:underline cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </>
+                ) : (
+                  <span className="font-bold text-gray-900">Todos los productos</span>
+                )}
+              </div>
+            </div>
 
+            {/* Contenedor del Grid */}
+            <div id="catalogo" className={`w-full ${categoriaUrl ? 'pt-2' : 'pt-2'}`}>
+              
+              {/* Banner de Ofertas */}
+              {!cargando && !categoriaUrl && !busqueda && productos.some(p => p.is_featured) && (
+                <div className="mb-8">
+                  <BannerOfertas productos={productos} agregarAlCarrito={agregarAlCarrito} />
+                </div>
+              )}
 
-      </div>
-
-      {/* Contenedor del Grid de Productos (Fluid Width) */}
-      <div id="catalogo" className={`w-full px-4 md:px-8 lg:px-12 ${categoriaUrl ? 'pt-4' : 'pt-4'}`}>
-
-        {/* Banner de Ofertas (Solo si no hay categoría seleccionada ni búsqueda y no está cargando) */}
-        {!cargando && !categoriaUrl && !busqueda && productos.some(p => p.is_featured) && (
-          <div className="mb-8">
-            <BannerOfertas productos={productos} agregarAlCarrito={agregarAlCarrito} />
-          </div>
-        )}
-
-        {cargando ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
-            {[...Array(14)].map((_, i) => (
-              <ProductoSkeleton key={i} />
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-8">
-            {productosVisibles.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4">
-                {productosVisibles.map((producto) => {
-                  const enCarrito = carrito.find((item) => item.id === producto.id);
+              {cargando ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-5">
+                  {[...Array(10)].map((_, i) => (
+                    <ProductoSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-8">
+                  {productosVisibles.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-5">
+                      {productosVisibles.map((producto) => {
+                        const enCarrito = carrito.find((item) => item.id === producto.id);
                   const cantidad = enCarrito ? enCarrito.cantidad : 0;
                   const estaAgotado = producto.stock === 0;
                   const pocoStock = producto.stock > 0 && producto.stock <= 5;
@@ -397,6 +451,9 @@ export default function Catalogo() {
         )}
       </div>
 
+                </div>
+        </div>
+      </div>
       <CarritoFlotante />
     </div>
   );

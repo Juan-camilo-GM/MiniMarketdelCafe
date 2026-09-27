@@ -128,22 +128,6 @@ export default function Navbar() {
                 {links.map((link) => {
                   const isActive = pathname === link.to;
 
-                  // Special rendering for 'Catálogo' to include Dropdown
-                  if (link.label === "Catálogo") {
-                    return (
-                      <li key={link.to}>
-                        <button
-                          onClick={() => setIsSidebarOpen(true)}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer
-                                ${isActive || isSidebarOpen ? "bg-white/20 text-white shadow-lg border border-white/20" : "text-indigo-100 hover:bg-white/10 hover:text-white"}`}
-                        >
-                          {link.icon}
-                          <span>{link.label}</span>
-                        </button>
-                      </li>
-                    );
-                  }
-
                   return (
                     <li key={link.to}>
                       <Link
