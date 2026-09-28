@@ -187,15 +187,15 @@ export default function Catalogo() {
           
           {/* Sidebar Categorías Desktop */}
           <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0">
-            <div className="sticky top-28">
-              <div className="bg-white rounded-2xl shadow-[0_2px_20px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden flex flex-col max-h-[calc(100vh-120px)]">
-                <div className="p-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
+            <div className="sticky top-28 z-10">
+              <div className="bg-white rounded-2xl shadow-lg border border-slate-100 flex flex-col" style={{ maxHeight: 'calc(100vh - 9rem)' }}>
+                <div className="p-5 border-b border-slate-100 bg-slate-50/50 shrink-0 rounded-t-2xl">
                   <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider flex items-center gap-2">
                     <IoGrid className="text-indigo-500 text-lg" />
                     Categorías
                   </h3>
                 </div>
-                <nav className="p-3 space-y-1 overflow-y-auto">
+                <nav className="p-3 space-y-1 overflow-y-auto flex-1 rounded-b-2xl [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   <button
                     onClick={() => {
                       const newParams = new URLSearchParams(searchParams);
