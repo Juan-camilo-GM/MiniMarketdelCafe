@@ -40,10 +40,10 @@ export default function CarritoFlotante() {
   const totalFinal = total + costoEnvio;
 
 
-  const [whatsappConfig, setWhatsappConfig] = useState("573117863431");
-  const [nequiConfig, setNequiConfig] = useState("3154186754");
-  const [daviplataConfig, setDaviplataConfig] = useState("3154186754");
-  const [titularConfig, setTitularConfig] = useState("Johana González");
+  const [whatsappConfig, setWhatsappConfig] = useState("573001234567");
+  const [nequiConfig, setNequiConfig] = useState("3001234567");
+  const [daviplataConfig, setDaviplataConfig] = useState("3001234567");
+  const [titularConfig, setTitularConfig] = useState("Administrador Demo");
 
   useEffect(() => {
     let isMounted = true;
@@ -174,7 +174,7 @@ export default function CarritoFlotante() {
       const guardado = await agregarPedido(pedido);
       if (!guardado) throw new Error("Error al guardar");
 
-      const mensaje = `¡HOLA! Quiero hacer un pedido en *MiniMarket del Café*
+      const mensaje = `¡HOLA! Quiero hacer un pedido en *Mini Market Demo*
 
     *Cliente:* ${cliente.nombre.trim()}
     ${entrega === "domicilio" ? `*Dirección:* ${cliente.direccion.trim()}\n*Entrega:* Domicilio (+${costoEnvio === 0 ? "GRATIS" : "$" + Number(costoEnvio).toLocaleString("es-CO")})` : "*Entrega:* Recoger en tienda"}
@@ -393,6 +393,7 @@ export default function CarritoFlotante() {
                   type="text"
                   placeholder="Ej: Laura Gómez"
                   value={cliente.nombre}
+                  maxLength={60}
                   onChange={(e) => setCliente({ ...cliente, nombre: e.target.value })}
                   className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                 />
@@ -477,6 +478,7 @@ export default function CarritoFlotante() {
                     type="text"
                     placeholder="Conjunto / bloque / apartamento"
                     value={cliente.direccion}
+                    maxLength={120}
                     onChange={(e) => setCliente({ ...cliente, direccion: e.target.value })}
                     className="w-full px-4 py-4 border border-emerald-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-emerald-50/50 transition"
                   />

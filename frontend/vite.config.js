@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'MiniMarket del Café',
-        short_name: 'MiniMarket',
+        name: 'MiniMarket Demo',
+        short_name: 'MiniMarket Demo',
         description: 'Tu minimarket de confianza siempre a la mano',
         theme_color: '#ffffff',
         background_color: '#ffffff',

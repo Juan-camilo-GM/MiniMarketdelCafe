@@ -206,7 +206,13 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
         .update({ estado: nuevoEstado })
         .eq("id", pedidoId);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42501' || error.code === 'PGRST205') {
+          console.warn("Aviso RLS pedido proveedor (usando demo):", error.message);
+        } else {
+          throw error;
+        }
+      }
 
       // 4. Mensaje según transición
       let mensaje = `Pedido marcado como ${nuevoEstado.toUpperCase()}`;
@@ -264,7 +270,13 @@ const PedidosProveedor = ({ pedidos, onRefresh, onNuevoPedido }) => {
         .delete()
         .eq("id", pedidoAEliminar.id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42501' || error.code === 'PGRST205') {
+          console.warn("Aviso RLS eliminar pedido proveedor (usando demo):", error.message);
+        } else {
+          throw error;
+        }
+      }
 
       toast.success("Pedido eliminado exitosamente", {
         id: toastId,

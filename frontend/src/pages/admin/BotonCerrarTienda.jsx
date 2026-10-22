@@ -43,9 +43,16 @@ export default function BotonCerrarTienda({ variant = "desktop" }) {
       .eq("id", 1);
 
     if (error) {
-      setCerrada(!nuevoEstado); // revertir si falla
-      toast.error("Error de conexión");
-      console.error(error);
+      if (error.code === '42501') {
+        console.warn("Aviso RLS estado tienda (usando demo):", error.message);
+        toast.success(nuevoEstado ? "Tienda cerrada (Modo Demo)" : "Tienda abierta (Modo Demo)");
+      } else {
+        setCerrada(!nuevoEstado); // revertir si falla
+        toast.error("Error de conexión");
+        console.error(error);
+      }
+    } else {
+      toast.success(nuevoEstado ? "Tienda cerrada" : "Tienda abierta");
     }
     setLoading(false);
   };

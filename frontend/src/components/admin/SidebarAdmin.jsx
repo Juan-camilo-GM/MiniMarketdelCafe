@@ -14,11 +14,13 @@ import {
 } from "react-icons/io5";
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../hooks/useAuth";
 import BotonCerrarTienda from "../../pages/admin/BotonCerrarTienda";
 
 export default function SidebarAdmin() {
   const { pathname } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout, isDemoAdmin } = useAuth();
 
   const adminLinks = [
     { to: "/admin/dashboard", label: "Resumen", icon: <IoTimeOutline className="text-2xl" /> },
@@ -32,7 +34,7 @@ export default function SidebarAdmin() {
   ];
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await logout();
   };
 
   return (
@@ -65,8 +67,15 @@ export default function SidebarAdmin() {
               A
             </div>
             <div>
-              <h2 className="text-white font-bold text-lg leading-tight">MiniMarket</h2>
-              <p className="text-indigo-200 text-sm">Panel de Control</p>
+              <h2 className="text-white font-bold text-lg leading-tight">MiniMarket <span className="text-indigo-300 font-normal text-sm">Demo</span></h2>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <p className="text-indigo-200 text-xs">Panel de Control</p>
+                {isDemoAdmin && (
+                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/25 text-emerald-300 border border-emerald-400/30">
+                    DEMO
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           {/* Botón cerrar en mobile que aparece dentro del sidebar */}
@@ -107,7 +116,7 @@ export default function SidebarAdmin() {
             className="flex items-center gap-3 px-4 py-3 w-full text-left text-emerald-200 hover:bg-emerald-500/10 hover:text-emerald-100 rounded-xl transition-all font-medium"
           >
             <IoStorefrontOutline className="text-2xl" />
-            Ver Catálogo Público
+            <span>Ver Catálogo Público</span>
           </Link>
           <button
             onClick={handleLogout}

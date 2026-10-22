@@ -36,9 +36,8 @@ export default function PoliticaDevoluciones() {
 
       <SeccionLegal titulo="4. Procedimiento para solicitar una devolución">
         <p>
-          Para reportar una novedad, contáctanos por WhatsApp al{" "}
-          <span className="font-semibold text-gray-900">+57 311 786 3431</span> o al correo{" "}
-          <span className="font-semibold text-gray-900">contacto@minimarketcafe.com</span> indicando:
+          Para reportar cualquier novedad, puedes escribir al correo{" "}
+          <span className="font-semibold text-gray-900">demo@minimarket.com</span> indicando:
         </p>
         <ul className="list-disc list-inside space-y-1.5">
           <li>Número de pedido.</li>
@@ -64,7 +63,7 @@ export default function PoliticaDevoluciones() {
 
       <SeccionLegal titulo="7. Excepción por garantía de calidad">
         <p>
-          Mini Market del Café se compromete con la calidad de sus productos. Si detectas cualquier
+          Mini Market Demo se compromete con la calidad de sus productos. Si detectas cualquier
           irregularidad fuera de los plazos mencionados, escríbenos y evaluaremos tu caso de manera
           particular.
         </p>

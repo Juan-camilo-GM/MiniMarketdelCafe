@@ -1,6 +1,17 @@
 import { supabase } from "./supabase";
 
 export const obtenerConfiguracion = async (clave) => {
+    // 1. Revisar si hay un valor guardado en demo / local
+    try {
+        const localVal = localStorage.getItem(`demo_config_${clave}`);
+        if (localVal !== null) {
+            return localVal;
+        }
+    } catch (e) {
+        // Ignorar si localStorage no está disponible
+    }
+
+    // 2. Consultar en Supabase
     try {
         const { data, error } = await supabase
             .from("configuracion")
@@ -9,7 +20,6 @@ export const obtenerConfiguracion = async (clave) => {
             .single();
 
         if (error) {
-            // Si el error es que no hay filas, retornamos null (config no existe)
             if (error.code === 'PGRST116') return null;
             console.error("Error obteniendo configuracion:", error);
             return null;
@@ -22,27 +32,44 @@ export const obtenerConfiguracion = async (clave) => {
 };
 
 export const guardarConfiguracion = async (clave, valor) => {
+    // 1. Siempre persistir en localStorage para Modo Demo y soporte offline
     try {
-        // Upsert: inserta o actualiza si la clave ya existe
+        localStorage.setItem(`demo_config_${clave}`, valor);
+        window.dispatchEvent(new CustomEvent("configuracion_actualizada", {
+            detail: { clave, valor }
+        }));
+    } catch (e) {
+        console.warn("No se pudo guardar en localStorage", e);
+    }
+
+    // 2. Intentar guardar en Supabase si hay sesión real o permisos
+    try {
         const { data, error } = await supabase
             .from("configuracion")
             .upsert({ clave, valor }, { onConflict: "clave" })
             .select();
 
         if (error) {
-            console.error("Error guardando configuracion:", error);
-            return null;
+            console.warn("Supabase RLS al guardar (usando fallback demo):", error.message);
+            // Retornamos éxito con los datos guardados en demo local
+            return [{ clave, valor }];
         }
         return data;
     } catch (err) {
-        console.error("Excepción en guardarConfiguracion:", err);
-        return null;
+        console.warn("Excepción guardando configuracion (usando fallback demo):", err);
+        return [{ clave, valor }];
     }
 };
 
-// Suscribe en tiempo real a cambios en la tabla `configuracion`.
-// Devuelve una función para cancelar la suscripción.
+// Suscribe en tiempo real a cambios en la tabla `configuracion` y a eventos locales
 export const subscribeConfiguracion = (clave, callback) => {
+    const localHandler = (e) => {
+        if (e.detail?.clave === clave) {
+            callback(e.detail.valor);
+        }
+    };
+    window.addEventListener("configuracion_actualizada", localHandler);
+
     const channel = supabase
         .channel(`configuracion_${clave}`)
         .on(
@@ -60,5 +87,8 @@ export const subscribeConfiguracion = (clave, callback) => {
         )
         .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    return () => {
+        window.removeEventListener("configuracion_actualizada", localHandler);
+        supabase.removeChannel(channel);
+    };
 };

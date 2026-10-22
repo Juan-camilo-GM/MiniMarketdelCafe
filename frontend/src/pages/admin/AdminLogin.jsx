@@ -2,7 +2,8 @@ import { useState } from "react";
 import CartLoader from "../../components/ui/CartLoader";
 import { supabase } from "../../lib/supabase";
 import { useNavigate } from "react-router-dom";
-import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline } from "react-icons/io5";
+import { useAuth } from "../../hooks/useAuth";
+import { IoAlertCircleOutline, IoCheckmarkCircleOutline, IoCloseCircleOutline, IoShieldCheckmarkOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 
 export default function AdminLogin() {
@@ -10,6 +11,16 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { enterDemo } = useAuth();
+
+  const handleDemoAccess = () => {
+    enterDemo();
+    toast.success("Has ingresado en Modo Demostración", {
+      icon: <IoCheckmarkCircleOutline size={22} className="text-emerald-500" />,
+      duration: 3000,
+    });
+    navigate("/admin");
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -216,9 +227,27 @@ export default function AdminLogin() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 mb-4">
               Solo personal autorizado puede acceder a esta sección
             </p>
+
+            {/* Tarjeta de Acceso Demo para Portafolio */}
+            <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 text-center">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide mb-2">
+                <IoShieldCheckmarkOutline className="text-emerald-700 text-sm" /> Demo de Portafolio
+              </span>
+              <p className="text-xs text-emerald-900 mb-3 leading-relaxed">
+                ¿Estás explorando mi portafolio? Accede directamente como administrador para probar la gestión de pedidos, caja, fiados y catálogo sin contraseña.
+              </p>
+              <button
+                type="button"
+                onClick={handleDemoAccess}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
+              >
+                <IoShieldCheckmarkOutline className="text-lg" />
+                <span>Explorar como Administrador (Demo)</span>
+              </button>
+            </div>
           </div>
         </form>
 

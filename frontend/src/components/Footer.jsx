@@ -10,22 +10,21 @@ export default function Footer() {
                     {/* Columna 1: Brand */}
                     <div className="space-y-4">
                         <h3 className="text-2xl font-black text-white tracking-tight">
-                            Mini Market <span className="text-indigo-400">del Café</span>
+                            Mini Market <span className="text-indigo-400">Demo</span>
                         </h3>
                         <p className="text-sm leading-relaxed opacity-80">
-                            Tu tienda de confianza con los productos más frescos y la mejor atención.
-                            Calidad y precio justo en cada compra.
+                            Aplicación web de comercio electrónico y gestión integral de minimercado (caja, pedidos, fiados y proveedores).
                         </p>
                         <div className="flex gap-4 pt-2">
-                            <a href="https://www.instagram.com/minimarket.delcafe/" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all duration-300">
+                            <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all duration-300 cursor-pointer">
                                 <IoLogoInstagram size={20} />
-                            </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all duration-300">
+                            </span>
+                            <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all duration-300 cursor-pointer">
                                 <IoLogoFacebook size={20} />
-                            </a>
-                            <a href="https://wa.me/573117863431" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all duration-300">
+                            </span>
+                            <span className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-green-600 hover:text-white transition-all duration-300 cursor-pointer">
                                 <IoLogoWhatsapp size={20} />
-                            </a>
+                            </span>
                         </div>
                     </div>
 
@@ -33,10 +32,9 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-bold mb-6">Enlaces Rápidos</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Inicio</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Catálogo</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Ofertas</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Contacto</a></li>
+                            <li><Link to="/catalogo" className="hover:text-indigo-400 transition-colors">Catálogo</Link></li>
+                            <li><Link to="/admin/login" className="hover:text-indigo-400 transition-colors">Panel Admin (Demo)</Link></li>
+                            <li><Link to="/terminos-y-condiciones" className="hover:text-indigo-400 transition-colors">Términos y Condiciones</Link></li>
                         </ul>
                     </div>
 
@@ -52,26 +50,26 @@ export default function Footer() {
 
                     {/* Columna 4: Contacto */}
                     <div>
-                        <h4 className="text-white font-bold mb-6">Contáctanos</h4>
+                        <h4 className="text-white font-bold mb-6">Información Demo</h4>
                         <ul className="space-y-4 text-sm">
                             <li className="flex items-start gap-3">
-                                <IoLocation className="text-indigo-500 text-lg shrink-0" />
-                                <span>Armenia, Quindío <br />Parque Residencial del Café <br />Bloque 8 Apto 802</span>
+                                <IoLocation className="text-indigo-500 text-lg shrink-0 mt-0.5" />
+                                <span>Entorno de demostración técnica<br />Portafolio Juan Camilo</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <IoCall className="text-indigo-500 text-lg shrink-0" />
-                                <span>+57 3117863431</span>
+                                <span>+57 300 000 0000</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <IoMail className="text-indigo-500 text-lg shrink-0" />
-                                <span>contacto@minimarketcafe.com</span>
+                                <span>demo@minimarket.com</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
                 <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium opacity-60">
-                    <p>© {new Date().getFullYear()} Mini Market del Café. Todos los derechos reservados.</p>
+                    <p>© {new Date().getFullYear()} Mini Market Demo. Proyecto de demostración para portafolio.</p>
                     <p></p>
                 </div>
             </div>

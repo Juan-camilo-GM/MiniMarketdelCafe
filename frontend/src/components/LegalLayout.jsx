@@ -40,7 +40,7 @@ export default function LegalLayout({ titulo, resumen, children }) {
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-8 font-medium">
-          Mini Market del Café · Armenia, Quindío — Colombia
+          Mini Market Demo · Entorno de Demostración para Portafolio
         </p>
       </div>
     </div>

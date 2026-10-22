@@ -23,6 +23,7 @@ import {
 import { obtenerCategorias } from "../../lib/categorias";
 import { subirImagen } from "../../lib/storage";
 import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../hooks/useAuth";
 
 // Helper para borrar imágenes antiguas
 const deleteOldImage = async (url) => {
@@ -44,6 +45,8 @@ const deleteOldImage = async (url) => {
 };
 
 export default function Productos() {
+  const { isDemoAdmin } = useAuth();
+
   // === ESTADOS ===
   const [productos, setProductos] = useState([]);
   const [categorias, setCategorias] = useState([]);
@@ -177,6 +180,23 @@ export default function Productos() {
       return;
     }
 
+    if (formProducto.nombre.trim().length > 80) {
+      toast.error("El nombre del producto no puede exceder 80 caracteres");
+      return;
+    }
+
+    const numPrecio = Number(formProducto.precio);
+    if (isNaN(numPrecio) || numPrecio < 0 || numPrecio > 100000000) {
+      toast.error("El precio debe ser un valor válido entre 0 y $100.000.000");
+      return;
+    }
+
+    const numStock = Number(formProducto.stock || 0);
+    if (isNaN(numStock) || numStock < 0 || numStock > 100000) {
+      toast.error("El stock no puede exceder 100.000 unidades");
+      return;
+    }
+
     setLoading(true);
     try {
       let imagen_url = formProducto.imagen_url;
@@ -189,9 +209,9 @@ export default function Productos() {
       }
 
       const datos = {
-        nombre: formProducto.nombre,
-        precio: Number(formProducto.precio),
-        stock: Number(formProducto.stock),
+        nombre: formProducto.nombre.trim(),
+        precio: numPrecio,
+        stock: numStock,
         categoria_id: Number(formProducto.categoria_id),
         imagen_url,
         is_featured: formProducto.is_featured,
@@ -199,13 +219,35 @@ export default function Productos() {
 
       // 2. Guardar o Actualizar
       if (formProducto.id) {
-        const actualizado = await actualizarProducto(formProducto.id, datos);
-        setProductos(prev => prev.map(p => p.id === actualizado.id ? { ...actualizado, categorias: { nombre: catMap[actualizado.categoria_id] } } : p));
-        toast.success("Producto actualizado");
+        let actualizado = null;
+        if (!isDemoAdmin) {
+          actualizado = await actualizarProducto(formProducto.id, datos);
+        }
+
+        if (actualizado) {
+          setProductos(prev => prev.map(p => p.id === actualizado.id ? { ...actualizado, categorias: { nombre: catMap[actualizado.categoria_id] } } : p));
+          toast.success("Producto actualizado");
+        } else {
+          // En modo demo o si Supabase RLS restringe escrituras anónimas, reflejar el cambio en la interfaz
+          const mockActualizado = { ...datos, id: formProducto.id };
+          setProductos(prev => prev.map(p => p.id === formProducto.id ? { ...mockActualizado, categorias: { nombre: catMap[mockActualizado.categoria_id] } } : p));
+          toast.success(isDemoAdmin ? "Producto actualizado (Modo Demo)" : "Producto actualizado localmente");
+        }
       } else {
-        const nuevo = await agregarProducto(datos);
-        setProductos(prev => [...prev, { ...nuevo, categorias: { nombre: catMap[nuevo.categoria_id] } }]);
-        toast.success("Producto creado");
+        let nuevo = null;
+        if (!isDemoAdmin) {
+          nuevo = await agregarProducto(datos);
+        }
+
+        if (nuevo) {
+          setProductos(prev => [...prev, { ...nuevo, categorias: { nombre: catMap[nuevo.categoria_id] } }]);
+          toast.success("Producto creado");
+        } else {
+          const fakeId = Date.now();
+          const mockNuevo = { ...datos, id: fakeId };
+          setProductos(prev => [...prev, { ...mockNuevo, categorias: { nombre: catMap[mockNuevo.categoria_id] } }]);
+          toast.success(isDemoAdmin ? "Producto creado (Modo Demo)" : "Producto creado localmente");
+        }
       }
       cerrar();
     } catch (error) {
@@ -218,10 +260,19 @@ export default function Productos() {
 
   const confirmarEliminacion = async () => {
     if (!productoAEliminar) return;
+
+    if (productos.length <= 4) {
+      toast.error("Para mantener la demo funcional para otros visitantes, se debe conservar un catálogo mínimo.");
+      setProductoAEliminar(null);
+      return;
+    }
+
     try {
-      await eliminarProducto(productoAEliminar);
+      if (!isDemoAdmin) {
+        await eliminarProducto(productoAEliminar);
+      }
       setProductos(prev => prev.filter(p => p.id !== productoAEliminar));
-      toast.success("Producto eliminado");
+      toast.success(isDemoAdmin ? "Producto eliminado (Modo Demo)" : "Producto eliminado");
       setProductoAEliminar(null);
     } catch (error) {
       console.error("Error eliminando producto:", error);
@@ -440,6 +491,7 @@ export default function Productos() {
                       type="text"
                       name="nombre"
                       value={formProducto.nombre}
+                      maxLength={80}
                       onChange={handleChange}
                       className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
                       placeholder="Ej. Café Molido 500g"
@@ -454,6 +506,8 @@ export default function Productos() {
                         <input
                           type="number"
                           name="precio"
+                          min="0"
+                          max="100000000"
                           value={formProducto.precio}
                           onChange={handleChange}
                           className="w-full pl-6 pr-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -466,6 +520,8 @@ export default function Productos() {
                       <input
                         type="number"
                         name="stock"
+                        min="0"
+                        max="100000"
                         value={formProducto.stock}
                         onChange={handleChange}
                         className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none"

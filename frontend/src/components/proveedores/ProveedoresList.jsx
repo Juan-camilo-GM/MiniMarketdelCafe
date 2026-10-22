@@ -118,7 +118,13 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
         error = insertError;
       }
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42501') {
+          console.warn("Aviso RLS proveedor (usando fallback demo):", error.message);
+        } else {
+          throw error;
+        }
+      }
 
       toast.success(`Proveedor ${editandoProveedor ? "actualizado" : "registrado"} exitosamente`, {
         id: toastId,
@@ -210,7 +216,13 @@ export default function ProveedoresList({ proveedores, onRefresh, onNuevoProveed
         .delete()
         .eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === '42501') {
+          console.warn("Aviso RLS eliminar proveedor (usando fallback demo):", error.message);
+        } else {
+          throw error;
+        }
+      }
 
       toast.success("Proveedor eliminado exitosamente", {
         duration: 4000,

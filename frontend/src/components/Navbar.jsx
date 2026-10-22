@@ -1,12 +1,14 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
 import { IoMenu, IoClose, IoLogOut, IoCart, IoGrid, IoTime, IoSearch, IoChevronForward, IoSettingsOutline } from "react-icons/io5";
 import { obtenerCategorias } from "../lib/categorias";
 import BotonCerrarTienda from "../pages/admin/BotonCerrarTienda";
 
 export default function Navbar() {
-  const [isAdminLogged, setIsAdminLogged] = useState(false);
+  const { isAdmin } = useAuth();
+  const isAdminLogged = isAdmin || (typeof window !== "undefined" && localStorage.getItem("is_demo_admin") === "true");
   const [scrolled, setScrolled] = useState(false);
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -59,14 +61,6 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return setIsAdminLogged(false);
-      const { data } = await supabase.from("admins").select("id").eq("user_id", user.id).single();
-      setIsAdminLogged(!!data);
-    };
-    checkAdmin();
-
     // Cargar categorías
     obtenerCategorias().then(setCategorias);
   }, [pathname]);
@@ -98,7 +92,7 @@ export default function Navbar() {
                 <h1 className="font-bold text-xl tracking-tight text-white leading-none">
                   Mini Market
                 </h1>
-                <span className="text-indigo-200 text-sm">del Café</span>
+                <span className="text-indigo-200 text-sm font-medium">Demo</span>
                 {isAdminLogged && (
                   <span className="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-white/20 text-white border border-white/30 hidden sm:inline-block">
                     ADMIN
@@ -150,11 +144,11 @@ export default function Navbar() {
                   <>
                     <li>
                       <Link
-                        to="/admin/dashboard"
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-white/20 text-white hover:bg-white/30 transition-all duration-200 border border-white/30"
+                        to="/admin"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl font-bold bg-white text-indigo-900 hover:bg-indigo-50 shadow-md transition-all duration-200 border border-white ml-2"
                       >
-                        <IoSettingsOutline className="text-xl" />
-                        Ir al Admin
+                        <IoSettingsOutline className="text-xl text-indigo-600" />
+                        <span>Volver al Panel Admin</span>
                       </Link>
                     </li>
                   </>
@@ -220,12 +214,12 @@ export default function Navbar() {
           {isAdminLogged && (
             <nav className="space-y-2 pb-6 border-b border-white/10">
               <Link
-                to="/admin/dashboard"
+                to="/admin"
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-4 px-4 py-3 text-white hover:bg-white/10 rounded-xl font-bold transition-all text-lg border border-white/20"
+                className="flex items-center gap-3 px-4 py-3 bg-white text-indigo-950 hover:bg-indigo-50 rounded-xl font-bold transition-all text-base shadow-md"
               >
-                <IoSettingsOutline className="text-xl" />
-                Ir al Panel Admin
+                <IoSettingsOutline className="text-xl text-indigo-600" />
+                <span>Volver al Panel Admin</span>
               </Link>
             </nav>
           )}

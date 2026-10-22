@@ -4,11 +4,43 @@ import { supabase } from "../lib/supabase";
 import { AuthContext } from "./AuthContextDefinition";
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("is_demo_admin") === "true") {
+      return { email: "demo@minimarket.com", id: "demo-admin", isDemo: true };
+    }
+    return null;
+  });
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return typeof window !== "undefined" && localStorage.getItem("is_demo_admin") === "true";
+  });
   const [loading, setLoading] = useState(true);
 
+  const enterDemo = () => {
+    localStorage.setItem("is_demo_admin", "true");
+    setUser({ email: "demo@minimarket.com", id: "demo-admin", isDemo: true });
+    setIsAdmin(true);
+  };
+
+  const logout = async () => {
+    localStorage.removeItem("is_demo_admin");
+    localStorage.removeItem("is_admin_cached");
+    setUser(null);
+    setIsAdmin(false);
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn("Sign out error", e);
+    }
+  };
+
   const checkAdminStatus = async () => {
+    if (localStorage.getItem("is_demo_admin") === "true") {
+      setUser({ email: "demo@minimarket.com", id: "demo-admin", isDemo: true });
+      setIsAdmin(true);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
@@ -60,6 +92,9 @@ export function AuthProvider({ children }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT" || !session) {
+        if (localStorage.getItem("is_demo_admin") === "true") {
+          return;
+        }
         setUser(null);
         setIsAdmin(false);
         setLoading(false);
@@ -72,7 +107,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAdmin,
+        isDemoAdmin: user?.isDemo || false,
+        enterDemo,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,37 +1,28 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
+import { obtenerConfiguracion, subscribeConfiguracion } from "../lib/config";
 import { IoMegaphoneOutline } from "react-icons/io5";
 
 export default function Megafono() {
     const [mensaje, setMensaje] = useState("");
 
     const cargarMensaje = async () => {
-        const { data, error } = await supabase
-            .from("configuracion")
-            .select("valor")
-            .eq("clave", "mensaje_megafono")
-            .single();
-            
-        if (!error && data) {
-            setMensaje(data.valor || "");
+        const val = await obtenerConfiguracion("mensaje_megafono");
+        if (val) {
+            setMensaje(val);
+        } else {
+            setMensaje("");
         }
     };
 
     useEffect(() => {
         cargarMensaje();
 
-        // Suscripción en tiempo real
-        const channel = supabase
-            .channel('megafono_updates')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'configuracion' }, (payload) => {
-                if (payload.new && payload.new.clave === 'mensaje_megafono') {
-                    setMensaje(payload.new.valor || "");
-                }
-            })
-            .subscribe();
+        const unsub = subscribeConfiguracion("mensaje_megafono", (nuevoValor) => {
+            setMensaje(nuevoValor || "");
+        });
 
         return () => {
-            supabase.removeChannel(channel);
+            if (unsub) unsub();
         };
     }, []);
 
@@ -41,7 +32,7 @@ export default function Megafono() {
         <div className="w-full bg-gradient-to-r from-amber-400 to-amber-500 text-amber-950 px-4 py-2 shadow-sm overflow-hidden whitespace-nowrap flex items-center border-b border-amber-500 relative z-30 mb-2">
             <div className="flex items-center gap-2 bg-amber-500/50 px-3 py-0.5 rounded-full z-10 font-black shrink-0 shadow-sm border border-amber-300/50 text-sm">
                 <IoMegaphoneOutline size={18} />
-                <span className="hidden sm:inline">NUEVO:</span>
+                <span className="hidden sm:inline">ANUNCIO:</span>
             </div>
             
             <div className="w-full overflow-hidden ml-3 relative flex items-center h-full">

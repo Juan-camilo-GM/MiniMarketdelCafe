@@ -4,16 +4,16 @@ export default function PoliticaPrivacidad() {
   return (
     <LegalLayout
       titulo="Política de Privacidad"
-      resumen="En Mini Market del Café tratamos tus datos personales con transparencia y seguridad, cumpliendo con la normativa colombiana de protección de datos."
+      resumen="En Mini Market Demo tratamos los datos de prueba y navegación con transparencia y seguridad en este entorno de demostración técnica."
     >
       <FechaActualizacion fecha="1 de septiembre de 2026" />
 
       <SeccionLegal titulo="1. Responsable del tratamiento">
         <p>
-          El responsable del tratamiento de los datos personales es Mini Market del Café, con domicilio en
-          Armenia, Quindío (Parque Residencial del Café, Bloque 8 Apto 802). Para cualquier consulta
-          relacionada con el tratamiento de tus datos, puedes escribirnos a{" "}
-          <span className="font-semibold text-gray-900">contacto@minimarketcafe.com</span>.
+          El responsable del tratamiento de los datos es Mini Market Demo, proyecto desarrollado por Juan Camilo
+          como demostración técnica de portafolio profesional. Para cualquier consulta
+          relacionada con el funcionamiento del sitio o manejo de datos de prueba, puedes escribirnos a{" "}
+          <span className="font-semibold text-gray-900">demo@minimarket.com</span>.
         </p>
       </SeccionLegal>
 
@@ -66,7 +66,7 @@ export default function PoliticaPrivacidad() {
           De acuerdo con la Ley 1581 de 2012, tienes derecho a conocer, actualizar, rectificar y suprimir tus
           datos, así como a revocar la autorización de su tratamiento. Puedes ejercer estos derechos
           escribiéndonos a{" "}
-          <span className="font-semibold text-gray-900">contacto@minimarketcafe.com</span>.
+          <span className="font-semibold text-gray-900">demo@minimarket.com</span>.
         </p>
       </SeccionLegal>
 
