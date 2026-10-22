@@ -13,7 +13,7 @@ export default function PoliticaPrivacidad() {
           El responsable del tratamiento de los datos es Mini Market Demo, proyecto desarrollado por Juan Camilo
           como demostración técnica de portafolio profesional. Para cualquier consulta
           relacionada con el funcionamiento del sitio o manejo de datos de prueba, puedes escribirnos a{" "}
-          <span className="font-semibold text-gray-900">demo@minimarket.com</span>.
+          <a href="mailto:camilo9171@gmail.com" className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">camilo9171@gmail.com</a>.
         </p>
       </SeccionLegal>
 
@@ -66,7 +66,7 @@ export default function PoliticaPrivacidad() {
           De acuerdo con la Ley 1581 de 2012, tienes derecho a conocer, actualizar, rectificar y suprimir tus
           datos, así como a revocar la autorización de su tratamiento. Puedes ejercer estos derechos
           escribiéndonos a{" "}
-          <span className="font-semibold text-gray-900">demo@minimarket.com</span>.
+          <a href="mailto:camilo9171@gmail.com" className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">camilo9171@gmail.com</a>.
         </p>
       </SeccionLegal>
 

@@ -6,7 +6,7 @@ import { AuthContext } from "./AuthContextDefinition";
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     if (typeof window !== "undefined" && localStorage.getItem("is_demo_admin") === "true") {
-      return { email: "demo@minimarket.com", id: "demo-admin", isDemo: true };
+      return { email: "camilo9171@gmail.com", id: "demo-admin", isDemo: true };
     }
     return null;
   });
@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
 
   const enterDemo = () => {
     localStorage.setItem("is_demo_admin", "true");
-    setUser({ email: "demo@minimarket.com", id: "demo-admin", isDemo: true });
+    setUser({ email: "camilo9171@gmail.com", id: "demo-admin", isDemo: true });
     setIsAdmin(true);
   };
 
@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
 
   const checkAdminStatus = async () => {
     if (localStorage.getItem("is_demo_admin") === "true") {
-      setUser({ email: "demo@minimarket.com", id: "demo-admin", isDemo: true });
+      setUser({ email: "camilo9171@gmail.com", id: "demo-admin", isDemo: true });
       setIsAdmin(true);
       setLoading(false);
       return;

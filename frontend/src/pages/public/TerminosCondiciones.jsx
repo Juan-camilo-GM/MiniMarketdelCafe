@@ -69,7 +69,7 @@ export default function TerminosCondiciones() {
       <SeccionLegal titulo="8. Contacto">
         <p>
           Para consultas o contacto profesional sobre este proyecto, puedes escribir a{" "}
-          <span className="font-semibold text-gray-900">demo@minimarket.com</span>.
+          <a href="mailto:camilo9171@gmail.com" className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">camilo9171@gmail.com</a>.
         </p>
       </SeccionLegal>
     </LegalLayout>

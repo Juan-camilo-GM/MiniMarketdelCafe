@@ -62,7 +62,7 @@ export default function Footer() {
                             </li>
                             <li className="flex items-center gap-3">
                                 <IoMail className="text-indigo-500 text-lg shrink-0" />
-                                <span>demo@minimarket.com</span>
+                                <a href="mailto:camilo9171@gmail.com" className="hover:text-indigo-400 transition-colors">camilo9171@gmail.com</a>
                             </li>
                         </ul>
                     </div>

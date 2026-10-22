@@ -37,7 +37,7 @@ export default function PoliticaDevoluciones() {
       <SeccionLegal titulo="4. Procedimiento para solicitar una devolución">
         <p>
           Para reportar cualquier novedad, puedes escribir al correo{" "}
-          <span className="font-semibold text-gray-900">demo@minimarket.com</span> indicando:
+          <a href="mailto:camilo9171@gmail.com" className="font-semibold text-gray-900 hover:text-indigo-600 transition-colors">camilo9171@gmail.com</a> indicando:
         </p>
         <ul className="list-disc list-inside space-y-1.5">
           <li>Número de pedido.</li>
